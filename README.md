@@ -1,12 +1,29 @@
 # Tadpole
 <p align="center" width="100%">
-<img src="apps/docs/src/assets/logo.png" width="150" />
+<img src="apps/docs/src/assets/logo.png" width="250" />
 </p>
 
 Tadpole is a DSL designed specifically for browser automation and data extraction. It is built
-on top of [KDL](https://kdl.dev/).
+on top of [KDL](https://kdl.dev/). It is designed to be modular and concise.
 
 See [Documentation](https://tadpolehq.com) to learn more!
+
+## Example
+```kdl
+import "modules/redfin/mod.kdl" repo="github.com/tadpolehq/community"
+
+main {
+    new_page {
+    redfin.search text="=text"
+    wait_until
+    redfin.extract_from_card extract_to="addresses" {
+        address {
+        redfin.extract_address_from_card
+        }
+    }
+  }
+}
+```
 
 ## Roadmap
 **NOTE**: Expect there to be a lot of changes, these earlier versions are not going to be stable!
