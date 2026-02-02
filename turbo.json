@@ -5,6 +5,7 @@
     "outputs": ["dist/**"]
   },
   "build:docs": {
+    "dependsOn": ["^build"],
     "outputs": [".astro/**", "dist/**"]
   },
   "check-types": {},
