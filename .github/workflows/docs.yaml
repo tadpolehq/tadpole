@@ -19,6 +19,9 @@ jobs:
     - name: Setup
       uses: ./.github/actions/setup
 
+    - name: Build library
+      run: yarn build
+
     - name: Build docs
       run: yarn build:docs
     
