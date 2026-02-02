@@ -1,0 +1,79 @@
+---
+title: Getting Started
+description: How to get Tadpole CLI running on your machine.
+---
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+Tadpole is a lightweight, DSL and scraper engine. The DSL is powered by KDL. The CLI is the primary way to execute your `.kdl` scripts.
+
+## Requirements
+- NodeJS
+- Modern version of Chrome or Chromimum (Tadpole uses CDP for browser automation)
+
+## Installation
+
+You can install the Tadpole CLI globally using your preferred package manager:
+
+<Tabs>
+  <TabItem label="pnpm">
+    ```bash
+    pnpm add -g @tadpolehq/cli
+    ```
+  </TabItem>
+  <TabItem label="npm">
+    ```bash
+    npm install -g @tadpolehq/cli
+    ```
+  </TabItem>
+  <TabItem label="yarn">
+    ```bash
+    yarn global add @tadpolehq/cli
+    ```
+  </TabItem>
+</Tabs>
+
+## Your First Script
+Create a file named `hello.kdl`. We’ll use a simple script to grab the "Article of the Day" from Wikipedia.
+
+```kdl
+main {
+  new_page {
+    goto "https://en.wikipedia.org"
+    extract data {
+      article {
+        $ "#mp-tfa"
+        text
+      }
+    }
+  }
+}
+```
+
+### Understanding the Script
+- `main`: The execution root of the script.
+- `new_page`: Creates a new browser tab and initiates a unique CDP session.
+- `goto`: Navigates to a URL. It automatically waits for the `load` event before proceeding.
+- `extract`: Transforms page content into a JSON object. By default, it starts at the document level.
+- `$`: Scopes the extraction to a specific CSS selector (in this case, `#mp-tfa`).
+- `text`: Pulls the `innerText` from the currently selected node and assigns it to the property name (in this case, `article`).
+
+### Running
+```bash
+tadpole run hello.kdl --auto --headless
+```
+
+<Aside type="note">
+  The `--auto` flag is used to to specify that Tadpole should try to automatically launch Chrome.
+  If your Chrome/Chromimum executable is located at a non standard path, you can provide the
+  `--chrome-bin` option with the full path to the binary or start chrome manually with remote debugging
+  enabled.
+</Aside>
+
+### The Result
+```json
+{
+  "data": {
+    "article": "Opifex fuscus is a species of mosquito that is endemic..."
+  }
+}
+```

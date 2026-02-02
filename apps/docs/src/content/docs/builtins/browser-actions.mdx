@@ -1,0 +1,55 @@
+---
+title: Browser Actions
+description: Learn about built-in browser actions
+---
+import { Aside } from '@astrojs/starlight/components';
+
+This page defines all of the built in browser scoped actions.
+
+## `new_page`
+Opens a new browser tab (Session). All nodes within the new_page block are executed sequentially within that specific tab's context.
+
+### Scope
+Transitions from Browser Scope to Session Scope.
+
+### Usage
+```kdl
+new_page {
+  goto "https://google.com"
+  type "Hello World!"
+  $ "button[title='Search']" {
+    click
+  }
+}
+```
+
+## `parallel`
+Executes multiple Browser Actions concurrently. This is the primary way to perform multi-tab automation or run simultaneous workflows.
+If any action fails, the entire operation will fail.
+
+### Usage
+```kdl
+parallel {
+  new_page { ... }
+  new_page { ... }
+}
+```
+
+<Aside type="note">
+The parallel block will wait for all child actions to complete before the script moves to the next node in the main block.
+</Aside>
+
+## `sleep`
+Pauses the execution of the current scope for a specified duration.
+
+### Args
+- `time`: The duration in milliseconds. Can be a static number or a dynamic expression.
+
+### Usage
+```kdl
+// Static
+sleep 2500
+
+// Dynamic
+sleep "=sec(2.5)"
+```

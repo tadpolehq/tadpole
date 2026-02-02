@@ -1,0 +1,127 @@
+import { EventEmitter } from 'events';
+import { WebSocket } from 'ws';
+
+type Callback = {
+  onsuccess: (res: any) => void;
+  onerror: (error: any) => void;
+};
+
+export type JSONRPCParams = {
+  method: string;
+  params?: Record<string, any>;
+  sessionId?: string | null;
+};
+
+export type BrowserParams = {
+  userAgent: string;
+  webSocketDebuggerUrl: string;
+};
+
+export class Browser {
+  private userAgent_: string;
+  private webSocketDebuggerUrl_: string;
+  private ws_: WebSocket | null;
+  private methodId_: number;
+  private callbacks_: Map<number, Callback>;
+  private eventEmitter_: EventEmitter;
+
+  constructor({ userAgent, webSocketDebuggerUrl }: BrowserParams) {
+    this.userAgent_ = userAgent;
+    this.webSocketDebuggerUrl_ = webSocketDebuggerUrl;
+    this.ws_ = null;
+    this.methodId_ = 1;
+    this.callbacks_ = new Map();
+    this.eventEmitter_ = new EventEmitter();
+  }
+
+  async connect(): Promise<void> {
+    if (this.ws_ !== null) return;
+    return new Promise((resolve, reject) => {
+      this.ws_ = new WebSocket(this.webSocketDebuggerUrl_);
+      this.ws_.once('open', () => resolve());
+      this.ws_.once('error', (e) => {
+        this.ws_ = null;
+        reject(e);
+      });
+      this.ws_.on('message', this.onMessage_.bind(this));
+    });
+  }
+
+  async close(timeout: number = 5000): Promise<void> {
+    const ws = this.ws_;
+    if (ws === null) return;
+
+    this.ws_ = null;
+    return new Promise((resolve) => {
+      const timeoutObj = setTimeout(() => {
+        ws.terminate();
+        resolve();
+      }, timeout);
+      ws.once('close', () => {
+        clearTimeout(timeoutObj);
+        resolve();
+      });
+      ws.close();
+    });
+  }
+
+  get userAgent(): string {
+    return this.userAgent_;
+  }
+
+  send<T>({ method, params, sessionId = null }: JSONRPCParams): Promise<T> {
+    if (this.ws_ === null) throw new Error('Websocket is not open.');
+
+    const id = this.methodId_++;
+    const data = JSON.stringify({
+      id,
+      method,
+      params: params ?? {},
+      sessionId: sessionId ?? undefined,
+    });
+    return new Promise((fufill, reject) => {
+      this.ws_!.send(data, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          this.callbacks_.set(id, {
+            onsuccess: (data) => fufill(data as T),
+            onerror: reject,
+          });
+        }
+      });
+    });
+  }
+
+  waitFor<T>(eventName: string, timeout: number): Promise<T> {
+    return new Promise((resolve, reject) => {
+      this.eventEmitter_.once(eventName, (data) => {
+        clearTimeout(timeoutId);
+        resolve(data as T);
+      });
+
+      const timeoutId = setTimeout(() => {
+        this.eventEmitter_.removeListener(eventName, resolve);
+        reject();
+      }, timeout);
+    });
+  }
+
+  private onMessage_(data: Buffer) {
+    const res = JSON.parse(data.toString());
+
+    if (res.id) {
+      if (!this.callbacks_.has(res.id)) return;
+
+      const callback = this.callbacks_.get(res.id)!;
+
+      if (res.error) callback.onerror(res.error);
+      else callback.onsuccess(res.result);
+
+      this.callbacks_.delete(res.id);
+    } else if (res.method) {
+      const { method, params, sessionId } = res;
+      this.eventEmitter_.emit(`${method}.${sessionId}`, params);
+    }
+  }
+}

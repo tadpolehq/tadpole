@@ -1,0 +1,9 @@
+{
+    "extends": "@tadpolehq/ts-config/base.json",
+    "compilerOptions": {
+      "outDir": "dist",
+      "rootDir": "src"
+    },
+    "include": ["src"]
+  }
+  

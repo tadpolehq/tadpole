@@ -1,0 +1,37 @@
+{
+  "name": "@tadpolehq/cli",
+  "version": "0.1.0",
+  "homepage": "https://tadpolehq.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tadpolehq/tadpole.git",
+    "directory": "apps/cli"
+  },
+  "type": "module",
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "dev": "tsdown --watch",
+    "build": "tsdown",
+    "lint": "eslint ."
+  },
+  "files": [
+    "dist"
+  ],
+  "bin": {
+    "tadpole": "./dist/main.mjs"
+  },
+  "dependencies": {
+    "@tadpolehq/core": "workspace:*",
+    "commander": "^14.0.2",
+    "winston": "^3.19.0"
+  },
+  "devDependencies": {
+    "@tadpolehq/eslint-config": "workspace:*",
+    "@tadpolehq/ts-config": "workspace:*",
+    "@tadpolehq/utils": "workspace:*",
+    "eslint": "^9.39.1",
+    "tsdown": "^0.20.1",
+    "typescript": "^5.9.3"
+  },
+  "license": "FSL-1.1-ALv2"
+}

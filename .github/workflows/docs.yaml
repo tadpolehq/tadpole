@@ -1,0 +1,44 @@
+name: Docs
+
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - apps/docs/**
+    - .github/workflows/docs.yaml
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Setup
+      uses: ./.github/actions/setup
+
+    - name: Build docs
+      run: yarn build:docs
+    
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: apps/docs/dist
+
+  deploy:
+    needs: build
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4

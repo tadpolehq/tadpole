@@ -1,0 +1,22 @@
+module redfin {
+  action search {
+    goto "https://www.redfin.com"
+    $ "#search-box-input" {
+      type "=text"
+    }
+    $ "button[title='Search']" {
+      click
+    }
+  }
+  action extract_from_card {
+    $$ ".MapHomecardWrapper" {
+      extract "=extract_to" {
+        slot
+      }
+    }
+  }
+  evaluator extract_address_from_card {
+    $ ".bp-Homecard__Address"
+    text
+  }
+}

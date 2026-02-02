@@ -1,0 +1,145 @@
+---
+title: Language Overview
+description: Learn the Tadpole language
+---
+import { Aside } from '@astrojs/starlight/components';
+
+The Tadpole language is built on top of the [KDL Document Language](https://kdl.dev/). Every script
+is a structured tree where every node maps to a specific operation in the browser automation lifecycle.
+
+## The Three Node Types
+- Execution Nodes (Actions): These nodes tell the browser to do something.
+  - Browser Actions: Global browser operations, like `new_page`.
+  - Session Actions: Interactions within a tab, like `click` or `goto`.
+- Data Nodes (Evaluators): These nodes tell the browser to read something. They execute JavaScript in the browser to extract any data, like `text` or `attr`.
+- Meta Nodes
+  - Module: These don't execute immediately. Instead, they register new reusable logic for later use.
+  - Import: These import modules from local files or remote Git repositories.
+  - Slot: A placeholder used within modules to inject caller-provided logic.
+
+### Contextual Constraints
+In Tadpole, *where* a node is placed **matters**. For example:
+- A Session Action (like `click`) must be a child of a Browser Action that creates a session (like `new_page`).
+- Meta nodes must be defined at the top level of the script.
+
+```kdl
+// The Global Scope, where Import and Module Nodes live:
+import "my_components.kdl"
+
+module my_module {
+  // The Module Definition Scope, where you define new evaluators,
+  // actions and browser_actions
+  evaluator get_title_for_id {
+    $ "=id"
+    attr "title"
+  }
+}
+
+main {
+  // The Browser Scope created by main.
+  // This scope contains Browser Actions.
+  new_page {
+    // `new_page` creates the Session Scope, it initiates a new session.
+    // This scope contains Session Actions.
+    goto "https://example.com"
+    extract "data" {
+      some_key {
+        // The Evaluator scope. This scope contains evaluators.
+        // They can be chained together to create complex
+        // computations.
+        my_module.get_title_for_id id="#some_id"
+      }
+    }
+  }
+}
+```
+
+<Aside type="note">
+User defined evaluators can take extra properties that will be injected as variables into the expression context during execution.
+</Aside>
+
+
+<Aside type="note">
+When using Import Nodes with Git repositories, Tadpole automatically clones and caches the remote module,
+allowing you to share automation logic across teams without copy-pasting code or dealing with a centralized
+package manager.
+</Aside>
+
+## Modules and Importing
+When you define a module in a `.kdl` file, it can be imported using `import`. The module name
+is the name used in the `module` declaration, not the file name. You can define multiple
+modules in a single file if desired. They provide a way of namespacing different actions and evaluators.
+When a module is imported, all defined actions and evaluators are added to the registry in their defined
+namespace.
+
+<Aside type="caution">
+It is also important to note that multiple files can register actions and evaluators in the
+same module. You can have evaluators and actions with the same name, but having duplicate actions under the
+same namespace **will throw an exception**.
+</Aside>
+
+### Import syntax
+`import` takes a single argument which is the file path. It can optionally also take
+a `repo` option which can point to any git url. You can also provide a `ref` option, which can
+be a git branch, tag or commit hash.
+
+#### Example
+```kdl
+// Local file import
+import "local/file-path.kdl"
+// Remote git import
+import "remote/file-path.kdl" repo="https://git.repo/somewhere" ref="0.1.0"
+```
+
+## Composition with Slots
+The `slot` node is a special node type that acts as a placeholder for dynamic logic. When a module is called,
+the children of the node are pushed onto a stack and `spliced` into the location of each `slot` in the callee.
+
+```kdl
+module card_worker {
+  action process_all_cards {
+    $$ ".card" {
+      // Everything the user puts inside process_all_cards {} 
+      // will be injected here.
+      slot
+    }
+  }
+}
+
+main {
+  new_page {
+    goto "https://example.com/items"
+    
+    card_worker.process_all_cards {
+      // These nodes fill the 'slot' inside the module
+      extract "cards" {
+        title {
+          $ ".title"
+          text
+        }
+      }
+    }
+  }
+}
+```
+
+<Aside type="note">
+Not all action types support slots. See documentation for specific action types to see what/where data is slotted.
+</Aside>
+
+## Expressions and Dynamic Values
+Most node arguments can be static or dynamic values. To use a dynamic value,
+you prefix the value with `=`. It is executed using the [expr-eval library](https://www.npmjs.com/package/expr-eval).
+
+```kdl
+// Static
+sleep 1000
+
+// Dynamic (using expr-eval logic)
+sleep "=base_timeout * 2"
+```
+
+<Aside type="note">
+You can provide global values from the CLI using the `--input` option. It must be any valid JSON object. They
+are accessible to all expressions.
+</Aside>

@@ -1,0 +1,14 @@
+module hello {
+  evaluator get_article_text {
+    $ "#mp-tfa"
+    text
+  }
+  action extract_article {
+    goto "https://en.wikipedia.org"
+    extract data {
+      article {
+        hello.get_article_text
+      }
+    }
+  }
+}

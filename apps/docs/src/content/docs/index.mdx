@@ -1,0 +1,68 @@
+---
+title: Tadpole
+description: The lightweight, KDL-powered browser automation engine.
+template: splash
+hero:
+  tagline: Scrape the web with a language designed for it.
+  actions:
+    - text: Get Started
+      link: /guides/getting-started/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/tadpole-hq/tadpole
+      icon: external
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+
+## Write Declarative, Modular Scraping Code
+Tadpole is built to be composable by allowing you to import modules from local files or remote repositories! All of the complexity
+of interacting with the browser is now completely abstracted away by the language! Building scrapers has never been easier!
+
+### Example
+```bash
+tadpole run redfin.kdl --input '{"text": "Seattle, WA"}' --auto --headless --output output.json
+```
+
+<Tabs>
+  <TabItem label="redfin.kdl">
+    ```kdl
+    import "modules/redfin/mod.kdl" repo="github.com/tadpolehq/community"
+
+    main {
+      new_page {
+        redfin.search text="=text"
+        wait_until
+        redfin.extract_from_card extract_to="addresses" {
+          address {
+            redfin.extract_address_from_card
+          }
+        }
+      }
+    }
+    ```
+  </TabItem>
+  <TabItem label="output">
+    ```json
+    {
+      "addresses": [
+          {
+            "address": "2011 E James St, Seattle, WA 98122"
+          },
+          {
+            "address": "8020 17th Ave NW, Seattle, WA 98117"
+          },
+          {
+            "address": "4015 SW Donovan St, Seattle, WA 98136"
+          },
+          {
+            "address": "116 13th Ave, Seattle, WA 98122"
+          }
+          ...
+        ]
+    }
+    ```
+  </TabItem>
+</Tabs>

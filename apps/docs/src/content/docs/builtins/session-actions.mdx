@@ -1,0 +1,185 @@
+---
+title: Session Actions
+description: Learn about built-in session actions
+---
+import { Aside } from '@astrojs/starlight/components';
+
+This page defines all of the built in session scoped actions.
+
+## `$`
+Selects a single element using the provided CSS selector and scopes all nested actions to that element.
+Any nested evaluators or actions will operate relative to this selection.
+
+### Args
+- `selector`: The CSS selector. Can be a static string or expression.
+
+### Usage
+```kdl
+$ "#search-input" {
+  type "Tadpole HQ"
+  mouse.press "Enter"
+}
+```
+
+## `$$`
+Selects all elements matching the provided CSS selector. This creates a collection context.
+
+### Args
+- `selector`: The CSS selector. Can be a static string or expression.
+
+<Aside type="note">
+Some actions (like `click` or `hover`) cannot be used on a collection directly.
+You must use `for_each` to interact with them individually.
+However, extract can be used directly to pull data from every element in the collection.
+</Aside>
+
+### Usage
+```kdl
+$$ ".result-card" {
+  extract "results" {
+    title { text }
+    link { attr "href" }
+  }
+}
+```
+
+## `click`
+Clicks on the active element. It uses a natural movement (bezier curve) to hover
+the mouse over the element and optionally delay before clicking the target.
+
+### Options
+- `delay`: The delay between hovering and clicking the target. Can be a static number or expression.
+- `mouseclick.*`: Prefixed options. See [`mouse.click`](#mouseclick) options
+- `hover.*`: Prefixed options. See [`hover`](#hover) options
+
+<Aside type="note">
+If delay evaluates to a negative number, it will be treated as 0 and ignored.
+</Aside>
+
+### Usage
+```kdl
+$ "#submit-button" {
+  click delay="=gauss(0.5, 0.25)"
+}
+```
+
+## `extract`
+Extracts data from the current element context into a structured record (JSON).
+Each child node of extract defines a key in the resulting object and the evaluator(s) used to fetch its value.
+
+### Args
+- `path`: The target key or dot-delimited path (e.g., `user.profile`) where the record will be stored in the global state.
+  Supports static strings or expressions.
+
+### Children
+The name of each child node becomes a key in the output record. The children of these nodes are evaluators because
+we need to produce a value.
+
+<Aside type="note">
+If the path has a `[]` suffix, then it is treated as an array and subsequent extracts
+to the same path will append to it, as opposed to overriding. However, if you are extracting
+a collection, it will be an array and does not require the `[]` suffix.
+</Aside>
+
+### Usage
+```kdl
+$$ ".product-card" {
+  extract "products" {
+    title { text }
+    price { 
+      $ ".amount"
+      text
+    }
+    details {
+      attr "data-info"
+    }
+  }
+}
+// Output: {"products": [{"title": "...", "price": "...", "details": "..."}, ...]}
+```
+
+### Usage (nested path)
+```kdl
+$ ".header" {
+  extract "metadata.page" {
+    title { text }
+    url { attr "href" }
+  }
+}
+// Output {"metadata": {"page": {"title": "...", "url": "..."}}}
+```
+
+## `for_each`
+Iterates over a collection of elements selected by a parent `$$` block.
+This action is required when you need to perform individual interactions (like `click` or `hover`) on every item in a list.
+
+### Usage
+```kdl
+$$ ".result-item" {
+  for_each {
+    $ "button.expand" { click }
+  }
+}
+```
+
+## `hover`
+Uses a combination of an ease-out function to scroll and a bezier curve
+to move the mouse over the active element.
+
+### Options
+- `move.*`: Prefixed options. See [`mouse.move`](#mousemove) options
+- `scroll.*`: Prefixed options. See [`mouse.natural_scroll`](#mousenaturalscroll) options
+
+## `goto`
+Navigates the current browser tab to a specified URL.
+
+### Args
+- `url`: The url to navigate to. Can be a static string or expression.
+
+### Options
+- `wait_until`: The event to wait for after navigating (`load` or `domcontentloaded`). Defaults to `load`.
+- `timeout`: The timeout (in ms) for the `wait_until` event to fire. Defaults to `5000`. Can be a static number or expression.
+
+## `type`
+Clicks on the active element and types in the provided text.
+
+It uses `hover` internally so it uses the same combination of an ease-out function to scroll
+and a bezier curve to move the mouse.
+
+### Args
+- `text`: The text to type. Can be a static string or expression.
+
+### Options
+- `delay`: The delay between clicking the target and typing. Can be a static number or expression.
+- `click.*`: Prefixed options. See [`click`](#click) options
+- `keyboardtype.*`: Prefixed options. See [`keyboard.type`](#keyboardtype) options
+
+<Aside type="note">
+If delay evaluates to a negative number, it will be treated as 0 and ignored.
+</Aside>
+
+## `sleep`
+
+## `wait_until`
+
+## `keyboard.down`
+
+## `keyboard.press`
+
+## `keyboard.type`
+
+## `keyboard.up`
+
+## `mouse.click`
+
+## `mouse.natural_move`
+
+## `mouse.natural_scroll`
+
+## `mouse.move`
+
+## `mouse.press`
+
+## `mouse.release`
+
+## `mouse.scroll`

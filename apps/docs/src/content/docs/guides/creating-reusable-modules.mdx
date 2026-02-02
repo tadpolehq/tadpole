@@ -1,0 +1,67 @@
+---
+title: Creating Reusable Modules
+description: Learn how to create reusable modules with Tadpole
+---
+import { Aside } from '@astrojs/starlight/components';
+
+Tadpole is designed for composability. By defining reusable blocks, you can share extraction logic, navigation flows, and custom evaluators across multiple projects.
+
+While the main block serves as your script's execution entry point, the module block allows you to define logic that can be invoked later.
+
+## The Three Contexts
+
+When building a module, you define logic for specific execution environments:
+- `actions`: Logic executed within an active CDP Session (e.g., clicking, typing, or navigating an existing page).
+- `browser_actions`: High-level logic executed at the Browser level (e.g., launching a new window or managing cookies across sessions).
+- `evaluators`: JavaScript snippets injected and executed directly in the Browser’s V8 context to extract data or interact with the DOM.
+
+## Your First Module
+Create a new file named `hello_module.kdl`. We're going to create reusable evaluators and actions
+for our previous script.
+
+```kdl
+module hello {
+  evaluator get_article_text {
+    $ "#mp-tfa"
+    text
+  }
+  action extract_article {
+    goto "https://en.wikipedia.org"
+    extract data {
+      article {
+        hello.get_article_text
+      }
+    }
+  }
+}
+```
+
+### Understanding this Module
+- `module`: Defines a named namespace (`hello`). This acts as a container for your logic, ensuring that if you import multiple modules, their names don't clash.
+- `evaluator`: Defines a reusable JavaScript-based query. Instead of repeating CSS selectors throughout your scripts, you define them once here. In this example, get_article_text combines a selector (`#mp-tfa`) with a transformation (`text`).
+- `access`: Defines a reusable sequence of steps. Actions can compose other commands like `goto` and `extract`. By bundling these, you can create complex composite actions.
+
+<Aside type="note" title="Namespace Access">
+  Modules are accessed using dot notation. You can define modules with multiple levels, for example `hello.deep.nested.namespace`, to further organize your library.
+</Aside>
+
+<Aside type="note" title="Registry Order">
+  Modules are grouped first based on their type (`evaluator`, `action`, `browser_action`), and then registered in the order they appear within the module.
+</Aside>
+
+### Updating our previous Example
+```kdl
+import "components/hello.kdl"
+
+main {
+  new_page {
+    hello.extract_article
+  }
+}
+```
+
+We use `import` now to register all of the evaluators and actions from our module file.
+
+<Aside type="note" title="Path Resolutuon">
+  Import paths are relative to the file they are called from. In this example, Tadpole looks for a components folder in the same directory as your current script.
+</Aside>
