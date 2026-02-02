@@ -1,6 +1,6 @@
 # Tadpole
 <p align="center" width="100%">
-<img src="apps/docs/src/assets/logo.png" width="250" />
+<img src="apps/docs/src/assets/logo.png" width="250g" />
 </p>
 
 Tadpole is a DSL designed specifically for browser automation and data extraction. It is built
@@ -13,13 +13,13 @@ See [Documentation](https://tadpolehq.com) to learn more!
 import "modules/redfin/mod.kdl" repo="github.com/tadpolehq/community"
 
 main {
-    new_page {
+  new_page {
     redfin.search text="=text"
     wait_until
     redfin.extract_from_card extract_to="addresses" {
-        address {
+      address {
         redfin.extract_address_from_card
-        }
+      }
     }
   }
 }
