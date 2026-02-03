@@ -6,9 +6,13 @@
 Tadpole is a DSL designed specifically for browser automation and data extraction. It is built
 on top of [KDL](https://kdl.dev/). It is designed to be modular and concise.
 
-See [Documentation](https://tadpolehq.com) to learn more!
+## Why?
+Tadpole tries to simplify the complexities of web scraping and automation by:
+- **Abstraction**: Simulating realistic human behavior (bezier curves, easing) through high-level composed actions.
+- **Zero Config**: Import and share scraper modules directly via Git, bypass NPM/Registry overhead.
+- **Reusability**: Actions and evaluators can be composed through slots to create more complex workflows.
 
-## Example
+### Example
 ```kdl
 import "modules/redfin/mod.kdl" repo="github.com/tadpolehq/community"
 
@@ -25,15 +29,31 @@ main {
 }
 ```
 
+## Getting Started
+See [Documentation](https://tadpolehq.com) to get started!
+
 ## Roadmap
 **NOTE**: Expect there to be a lot of changes, these earlier versions are not going to be stable!
 
+**The Goal**
+The long term vision and goal I have for this project is to create a new standard way of web scraping.
+
 **Planned for 0.2.0**
-- **Control Flow**: Add if/else and loops
+- **Control Flow**: Add maybe (effectively try/catch) and loop (do whiles)
 - **DOMPick**: Used to select elements by index
 - **DOMFilter**: Used to filter elements using evaluators
 - **More Evaluators**: Type casting, regex, exists
 - **Root Slots**: Support for top level dynamic placeholders
+- **Error Reporting**: More robust error reporting
+- **Logging**: More consistent logging from actions and add `log` action to global registry
+
+**0.3.0**
+- **Piping**: Allowing different files to chain input/output.
+- **Outputs**: Complex output sinks to databases, s3, kafka, etc.
+- **DAGs**: Use directed acylic graphs to create complex crawling scenarios and parallel compute.  
+
+**Beyond that?**
+Thinking about it!
 
 ## Community
 Checkout our [Community Repository](https://github.com/tadpolehq/community) to share your scrapers or find pre-built modules.

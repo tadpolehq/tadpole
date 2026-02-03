@@ -6,6 +6,12 @@ import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 
 Tadpole is a lightweight, DSL and scraper engine. The DSL is powered by KDL. The CLI is the primary way to execute your `.kdl` scripts.
 
+## Why?
+Tadpole tries to simplify the complexities of web scraping and automation by:
+- **Abstraction**: Simulating realistic human behavior (bezier curves, easing) through high-level composed actions.
+- **Zero Config**: Import and share scraper modules directly via Git, bypass NPM/Registry overhead.
+- **Reusability**: Actions and evaluators can be composed through slots to create more complex workflows.
+
 ## Requirements
 - NodeJS
 - Modern version of Chrome or Chromimum (Tadpole uses CDP for browser automation)
