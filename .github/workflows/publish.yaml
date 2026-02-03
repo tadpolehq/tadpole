@@ -1,0 +1,27 @@
+name: Publish
+
+on:
+  push:
+    branches:
+    - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Setup
+      uses: ./.github/actions/setup
+
+    - name: Build
+      run: yarn build
+
+    - name: Create Release Pull Request or Publish to npm
+      uses: changesets/action@v1
+      with:
+        publish: yarn release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -57,7 +57,7 @@ export default defineConfig({
         },
         {
           label: 'License',
-          link: 'https://github.com/tadpolehq/tadpole/blob/main/LICENSE.md',
+          link: 'https://github.com/tadpolehq/tadpole/blob/main/LICENSE',
           attrs: { target: '_blank' },
         },
         typeDocSidebarGroup,

@@ -1,6 +1,7 @@
 {
   "name": "@tadpolehq/core",
   "version": "0.1.0",
+  "description": "The engine for Tadpole's browser automation and data extraction",
   "homepage": "https://tadpolehq.com",
   "repository": {
     "type": "git",
@@ -24,6 +25,7 @@
     }
   },
   "dependencies": {
+    "@tadpolehq/schema": "workspace:*",
     "axios": "^1.11.0",
     "bezier-js": "^6.1.4",
     "expr-eval": "^2.0.2",
