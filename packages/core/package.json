@@ -1,6 +1,6 @@
 {
   "name": "@tadpolehq/core",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "The engine for Tadpole's browser automation and data extraction",
   "homepage": "https://tadpolehq.com",
   "repository": {
