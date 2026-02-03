@@ -8,7 +8,6 @@ on:
     - .github/workflows/test.yaml
   push:
     branches:
-    - main
     - develop
     paths:
     - apps/**
