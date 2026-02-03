@@ -11,7 +11,7 @@
     "postinstall": "husky",
     "prepack": "pinst --disable",
     "postpack": "pinst --enable",
-    "release": "yarn sync-license && yarn build && changeset publish",
+    "release": "yarn sync-license && yarn build && yarn changeset publish",
     "sync-license": "cp LICENSE packages/core/ && cp LICENSE packages/schema/ && cp LICENSE apps/cli/",
     "test": "turbo run test"
   },
