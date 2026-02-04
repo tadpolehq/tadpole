@@ -155,8 +155,10 @@ export class MouseScroll implements IAction<SessionContext> {
 }
 
 export const MouseNaturalScrollOptionsSchema = ts.properties({
-  steps: ts.expression(ts.default(ts.number(), 20)),
   delay: ts.expression(ts.default(ts.number(), 0)),
+  stepPrecision: ts.expression(ts.default(ts.number(), 10)),
+  minSteps: ts.expression(ts.default(ts.number(), 10)),
+  maxSteps: ts.expression(ts.default(ts.number(), 100)),
 });
 
 export const BaseMouseNaturalScrollSchema = ts.node({
@@ -196,7 +198,21 @@ export class MouseNaturalScroll implements IAction<SessionContext> {
     const scrolls = [];
     let ratio,
       prevRatio = 0;
-    const steps = this.params_.options.steps.resolve(ctx.$.expressionContext);
+
+    const minSteps = this.params_.options.minSteps.resolve(
+      ctx.$.expressionContext,
+    );
+    const maxSteps = this.params_.options.maxSteps.resolve(
+      ctx.$.expressionContext,
+    );
+    const stepPrecision = this.params_.options.stepPrecision.resolve(
+      ctx.$.expressionContext,
+    );
+    const length = Math.sqrt(endDeltaX * endDeltaX + endDeltaY * endDeltaY);
+    const steps = Math.max(
+      minSteps,
+      Math.min(maxSteps, Math.floor(length / stepPrecision)),
+    );
     for (let i = 1; i <= steps; i++) {
       const t = i / steps;
       ratio = 1 - Math.pow(1 - t, 3);

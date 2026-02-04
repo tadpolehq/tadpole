@@ -7,4 +7,4 @@ export function getQuadCenter(quad: DOM.Quad): [number, number] {
 }
 
 export const withPrefix = (prefix: string | undefined, key: string) =>
-  prefix ? `${prefix}${key}.` : `${key}.`;
+  prefix ? `${prefix}${key}` : `${key}`;

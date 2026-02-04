@@ -90,21 +90,24 @@ export class DOMHover implements IAction<SessionContext> {
       'DOM.getBoxModel',
       params,
     );
-    // TODO: Add some randomization of where button is hovered to
-    const nodeX = (boxModel.content[0] + boxModel.content[4]) / 2;
-    const nodeY = (boxModel.content[1] + boxModel.content[5]) / 2;
-    ctx.$.log.debug(
-      `Calculated center for objectId=${activeNode} (x = ${nodeX}, y = ${nodeY})`,
-    );
-
     const { cssLayoutViewport, cssContentSize } =
       await ctx.session.send<Page.LayoutMetrics>('Page.getLayoutMetrics');
+    const nodeX =
+      cssLayoutViewport.pageX +
+      boxModel.content[0] +
+      boxModel.width * (0.3 + Math.random() * 0.4);
+    const nodeY =
+      cssLayoutViewport.pageY +
+      boxModel.content[1] +
+      boxModel.height * (0.3 + Math.random() * 0.4);
+    ctx.$.log.debug(
+      `Calculated position for objectId=${activeNode} (x = ${nodeX}, y = ${nodeY})`,
+    );
 
-    // TODO: Allow variance where in page it is moved to
     const targetX =
-      nodeX - (cssLayoutViewport.pageX + cssLayoutViewport.clientWidth / 2);
+      nodeX - cssLayoutViewport.clientWidth * (0.3 + Math.random() * 0.4);
     const targetY =
-      nodeY - (cssLayoutViewport.pageY + cssLayoutViewport.clientHeight / 2);
+      nodeY - cssLayoutViewport.clientHeight * (0.3 + Math.random() * 0.4);
 
     const deltaX = clampDelta(
       cssLayoutViewport.pageX,
@@ -122,9 +125,8 @@ export class DOMHover implements IAction<SessionContext> {
     ctx.$.log.debug(
       `Calculated delta for moving node into view: (x = ${deltaX}, y = ${deltaY})`,
     );
-
-    let viewportX, viewportY;
     // TODO: Allow changing of min diff to trigger scroll
+    let viewportX, viewportY;
     if (Math.abs(deltaX) >= 100 || Math.abs(deltaY) >= 100) {
       const mouseScroll = new MouseNaturalScroll({
         args: [
