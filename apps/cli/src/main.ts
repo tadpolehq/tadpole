@@ -194,7 +194,7 @@ program
     } else {
       log.error(
         `Error parsing definition: ${JSON.stringify(
-          result.error.issue,
+          result.error.flatten(),
           undefined,
           2,
         )}`,

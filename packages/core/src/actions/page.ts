@@ -44,25 +44,11 @@ async function waitUntil(
 ) {
   switch (waitUntil) {
     case 'domcontentloaded': {
-      ctx.$.log.debug(
-        `Waiting for 'Page.domContentEventFired' to fire, will timeout after ${timeout}ms`,
-      );
-      const res = await ctx.session.waitFor<any>(
-        'Page.domContentEventFired',
-        timeout,
-      );
-      ctx.$.log.debug(`Event emitted with params ${JSON.stringify(res)}`);
+      await ctx.session.waitFor<any>('Page.domContentEventFired', timeout);
       break;
     }
     case 'load': {
-      ctx.$.log.debug(
-        `Waiting for 'Page.loadEventFired' to fire, will timeout after ${timeout}ms`,
-      );
-      const res = await ctx.session.waitFor<any>(
-        'Page.loadEventFired',
-        timeout,
-      );
-      ctx.$.log.debug(`Event emitted with params ${JSON.stringify(res)}`);
+      await ctx.session.waitFor<any>('Page.loadEventFired', timeout);
       break;
     }
   }
@@ -103,11 +89,6 @@ export class PageGoto implements IAction<SessionContext> {
         ctx.$.expressionContext,
       ),
     };
-    ctx.$.log.debug(
-      `Calling 'Page.navigate' with params ${JSON.stringify(
-        pageNavigateParams,
-      )}`,
-    );
     await ctx.session.send('Page.navigate', pageNavigateParams);
     await waitUntil(
       ctx,

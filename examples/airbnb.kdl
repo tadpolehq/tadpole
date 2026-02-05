@@ -1,0 +1,57 @@
+module airbnb {
+  action search {
+    goto "https://www.airbnb.com/"
+    parallel {
+      airbnb.maybe_close_dialog
+      wait_for { $ "#bigsearch-query-location-input"; as_boolean }
+    }
+    $ "#bigsearch-query-location-input" {
+      type "=text" keyboardtype.delay="=random() * 250"
+    }
+    sleep "=random() * 125"
+    $ "[data-testid='structured-search-input-search-button']" {
+      click
+    }
+  }
+
+  action maybe_close_dialog {
+    maybe {
+      wait_for { $ "div[role='dialog']"; as_boolean }
+      $ "div[role='dialog'] button" { click }
+    }
+  }
+
+  action load_each_page {
+    wait_for { $ "#site-content nav div"; as_boolean }
+    parallel {
+      airbnb.maybe_close_dialog
+      wait_for { $ "#site-content nav div"; as_boolean }
+    }
+    loop {
+      while {
+        $ "#site-content nav div"; child -1; func "(e) => e.tagName === 'A'"
+      }
+      do {
+        $ "#site-content" { hover }
+        slot
+        $ "#site-content nav div a:last-of-type" {
+          click delay="=random() * 150" hover.delay="=random() * 100"
+        }
+      }
+    }
+  }
+}
+
+main {
+  new_page {
+    airbnb.search text="Miami, Florida"
+    airbnb.load_each_page {
+      $$ "[itemProp='itemListElement']" {
+        extract "pages[]" {
+          link { $ "a"; attr "href" }
+          price { $ "[data-testid='price-availability-row']"; text }
+        }
+      }
+    }
+  }
+}

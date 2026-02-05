@@ -3,4 +3,5 @@ export interface ILogger {
   info(...args: any[]): void;
   warn(...args: any[]): void;
   error(...args: any[]): void;
+  child(context: Record<string, any>): ILogger;
 }

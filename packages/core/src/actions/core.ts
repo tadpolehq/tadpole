@@ -47,7 +47,7 @@ export class Sleep<TCtx extends { $: RootContext }> implements IAction<TCtx> {
 
   async execute(ctx: TCtx) {
     const [time] = this.params_.args;
-    ctx.$.log.info(`Sleeping for ${time}ms`);
+    ctx.$.log.debug(`Sleeping for ${time}ms`);
     await new Promise((resolve) =>
       setTimeout(resolve, time.resolve(ctx.$.expressionContext)),
     );

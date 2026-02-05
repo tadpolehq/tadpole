@@ -16,7 +16,7 @@ export type DefParams = ts.output<typeof BaseDefSchema>;
 export type DefExecuteParams = {
   host?: string;
   port?: number;
-  log?: ILogger;
+  log: ILogger;
   expressionParser?: ts.ExpressionParser;
   expressionValues?: Record<string, ts.ExpressionValue>;
 };
@@ -41,18 +41,18 @@ export class Def {
     log,
     expressionParser,
     expressionValues,
-  }: DefExecuteParams = {}): Promise<Output> {
+  }: DefExecuteParams): Promise<Output> {
     const browserMetadata = (
       await axios.get<BrowserMetadata>(`http://${host}:${port}/json/version`)
     ).data;
     const browser = new Browser({
       userAgent: browserMetadata['User-Agent'],
       webSocketDebuggerUrl: browserMetadata.webSocketDebuggerUrl,
+      log,
     });
     await browser.connect();
 
     const output = new Map();
-    log = log || console;
     const ctx = {
       $: new RootContext({
         log,

@@ -65,7 +65,7 @@ export abstract class StructType<
       }
     }
 
-    if (Object.keys(issues).length > 1)
+    if (Object.keys(issues).length > 0)
       return new Err(
         new SchemaError({
           issues,

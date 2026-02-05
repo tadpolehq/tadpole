@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import { WebSocket } from 'ws';
+import type { ILogger } from './logger.js';
 
 type Callback = {
   onsuccess: (res: any) => void;
@@ -15,6 +16,7 @@ export type JSONRPCParams = {
 export type BrowserParams = {
   userAgent: string;
   webSocketDebuggerUrl: string;
+  log: ILogger;
 };
 
 export class Browser {
@@ -24,14 +26,16 @@ export class Browser {
   private methodId_: number;
   private callbacks_: Map<number, Callback>;
   private eventEmitter_: EventEmitter;
+  private log_: ILogger;
 
-  constructor({ userAgent, webSocketDebuggerUrl }: BrowserParams) {
+  constructor({ userAgent, webSocketDebuggerUrl, log }: BrowserParams) {
     this.userAgent_ = userAgent;
     this.webSocketDebuggerUrl_ = webSocketDebuggerUrl;
     this.ws_ = null;
     this.methodId_ = 1;
     this.callbacks_ = new Map();
     this.eventEmitter_ = new EventEmitter();
+    this.log_ = log;
   }
 
   async connect(): Promise<void> {
@@ -79,10 +83,11 @@ export class Browser {
       params: params ?? {},
       sessionId: sessionId ?? undefined,
     });
+    this.log_.debug(`Sending message with data=${data}`);
     return new Promise((fufill, reject) => {
       this.ws_!.send(data, (err) => {
         if (err) {
-          reject(err);
+          reject(new Error(`Error sending message: ${err.message}`));
         } else {
           this.callbacks_.set(id, {
             onsuccess: (data) => fufill(data as T),
@@ -94,15 +99,21 @@ export class Browser {
   }
 
   waitFor<T>(eventName: string, timeout: number): Promise<T> {
+    this.log_.debug(
+      `Waiting for '${eventName}' to fire, will timeout after ${timeout}ms`,
+    );
     return new Promise((resolve, reject) => {
       this.eventEmitter_.once(eventName, (data) => {
         clearTimeout(timeoutId);
+        this.log_.debug(
+          `Event emitted for ${eventName} with params ${JSON.stringify(data)}`,
+        );
         resolve(data as T);
       });
 
       const timeoutId = setTimeout(() => {
         this.eventEmitter_.removeListener(eventName, resolve);
-        reject();
+        reject(new Error(`Timed out waiting for event: ${eventName}`));
       }, timeout);
     });
   }
@@ -115,8 +126,14 @@ export class Browser {
 
       const callback = this.callbacks_.get(res.id)!;
 
-      if (res.error) callback.onerror(res.error);
-      else callback.onsuccess(res.result);
+      if (res.error) {
+        callback.onerror(res.error);
+      } else {
+        this.log_.debug(
+          `Message id=${res.id} received response: ${JSON.stringify(res)}`,
+        );
+        callback.onsuccess(res.result);
+      }
 
       this.callbacks_.delete(res.id);
     } else if (res.method) {

@@ -1,6 +1,7 @@
 import {
-  type IRegistry,
   Registry,
+  type IRegistry,
+  type ExpressionContext,
   type Node,
   type Type,
 } from '@tadpolehq/schema';
@@ -18,7 +19,7 @@ export interface IAction<TCtx> {
 }
 
 export interface IEvaluator {
-  toJS(input: string): string;
+  toJS(input: string, ctx: ExpressionContext): string;
 }
 
 export const BrowserActionRegistry: IRegistry<

@@ -3,6 +3,7 @@
   "scripts": {
     "build": "turbo run build",
     "build:docs": "turbo run build:docs",
+    "check-types": "turbo run check-types",
     "dev": "turbo run dev",
     "dev:docs": "turbo run dev:docs",
     "lint": "turbo run lint",

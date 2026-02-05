@@ -18,47 +18,30 @@ export class BrowserNewPage implements IAction<BrowserContext> {
   constructor(private params_: BrowserNewPageParams) {}
 
   async execute(ctx: BrowserContext) {
-    ctx.$.log.debug("Calling 'Target.createBrowserContext'");
     const { browserContextId } = await ctx.browser.send<{
       browserContextId: string;
     }>({
       method: 'Target.createBrowserContext',
     });
-    ctx.$.log.debug(`Created new browser context with id=${browserContextId}`);
-
     const createTargetParams = { url: '', browserContextId };
-    ctx.$.log.debug(
-      `Calling 'Target.createTarget' with params ${JSON.stringify(
-        createTargetParams,
-      )}`,
-    );
     const { targetId } = await ctx.browser.send<{ targetId: string }>({
       method: 'Target.createTarget',
       params: createTargetParams,
     });
-    ctx.$.log.debug(`Created new target with id=${targetId}`);
-
     const attachToTargetParams = {
       targetId,
       flatten: true,
     };
-    ctx.$.log.debug(
-      `Calling 'Target.attachToTarget' with params ${JSON.stringify(
-        attachToTargetParams,
-      )}`,
-    );
     const { sessionId } = await ctx.browser.send<{ sessionId: string }>({
       method: 'Target.attachToTarget',
       params: attachToTargetParams,
     });
-    ctx.$.log.debug(`Created new session with id=${sessionId}`);
-
     const pageSession = new Session({
       id: sessionId,
       browser: ctx.browser,
+      logger: ctx.$.log.child({ sessionId }),
     });
 
-    ctx.$.log.debug("Calling 'Page.enable'");
     await pageSession.send('Page.enable');
 
     const pageCtx = {

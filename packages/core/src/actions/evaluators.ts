@@ -1,23 +1,64 @@
 import * as ts from '@tadpolehq/schema';
 import type { IEvaluator } from './base.js';
 
-export const BaseGetAttributeSchema = ts.node({
+export const BaseAsBooleanSchema = ts.node({
+  properties: ts.properties({
+    inverted: ts.default(ts.boolean(), false),
+  }),
+});
+
+export type AsBooleanParams = ts.output<typeof BaseAsBooleanSchema>;
+
+export const AsBooleanParser = ts.into(
+  BaseAsBooleanSchema,
+  (v): IEvaluator => new AsBoolean(v),
+);
+
+export class AsBoolean implements IEvaluator {
+  constructor(private params_: AsBooleanParams) {}
+
+  toJS(input: string): string {
+    return this.params_.properties.inverted ? `!(${input})` : `!!(${input})`;
+  }
+}
+
+export const BaseAttrSchema = ts.node({
   args: ts.args([ts.string()]),
 });
 
-export type GetAttributeParams = ts.output<typeof BaseGetAttributeSchema>;
+export type AttrParams = ts.output<typeof BaseAttrSchema>;
 
-export const GetAttributeParser = ts.into(
-  BaseGetAttributeSchema,
-  (v): IEvaluator => new GetAttribute(v),
+export const AttrParser = ts.into(
+  BaseAttrSchema,
+  (v): IEvaluator => new Attr(v),
 );
 
-export class GetAttribute implements IEvaluator {
-  constructor(private params_: GetAttributeParams) {}
+export class Attr implements IEvaluator {
+  constructor(private params_: AttrParams) {}
 
   toJS(input: string): string {
     const [attr] = this.params_.args;
     return `${input}.getAttribute("${attr}")`;
+  }
+}
+
+export const BaseChildSchema = ts.node({
+  args: ts.args([ts.expression(ts.number())]),
+});
+
+export type ChildParams = ts.output<typeof BaseChildSchema>;
+
+export const ChildParser = ts.into(
+  BaseChildSchema,
+  (v): IEvaluator => new Child(v),
+);
+
+export class Child implements IEvaluator {
+  constructor(private params_: ChildParams) {}
+
+  toJS(input: string, ctx: ts.ExpressionContext): string {
+    const index = this.params_.args[0].resolve(ctx);
+    return `Array.from(${input}.children).at(${index})`;
   }
 }
 
