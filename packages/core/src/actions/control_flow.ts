@@ -32,7 +32,7 @@ export class Filter implements IAction<SessionContext> {
       (input, evaluator) => evaluator.toJS(input, ctx.$.expressionContext),
       'e',
     );
-    const functionDeclaration = `function() { return this.filter(e => !!(${predicate})); }`;
+    const functionDeclaration = `function() { return this.filter(e => ${predicate}); }`;
     const result = await ctx.session.callFunctionOn(
       functionDeclaration,
       activeNode.remoteObjectId,
@@ -126,8 +126,8 @@ export class Loop implements IAction<SessionContext> {
       'e',
     );
     const functionBody = activeNode.isCollection
-      ? `return this.all(e => !!(${predicate}));`
-      : `const e = this; return !!(${predicate});`;
+      ? `return this.all(e => ${predicate});`
+      : `const e = this; return ${predicate});`;
     const functionDeclaration = `function() { ${functionBody} }`;
     const params = {
       returnByValue: true,

@@ -1,0 +1,17 @@
+main {
+  new_page "https://news.ycombinator.com/news" {
+    $$ "span.titleline" {
+      filter {
+        if {
+          text; func "(t) => ['claude', 'gpt', 'ai'].some(w => t.includes(w))"
+        }
+        do {
+          extract stories {
+            text { text }
+            link { $ a; attr href }
+          }
+        }
+      }
+    }
+  }
+}
