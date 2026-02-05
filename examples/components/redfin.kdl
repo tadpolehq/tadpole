@@ -1,6 +1,5 @@
 module redfin {
   action search {
-    goto "https://www.redfin.com"
     $ "#search-box-input" {
       type "=text"
     }

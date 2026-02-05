@@ -21,6 +21,8 @@ export class Session {
   private nodeStack_: Node[];
   private mousePosition_: MousePosition;
   private logger_: ILogger;
+  private mainFrameId_?: string;
+  private currentLoaderId_?: string;
 
   constructor({ id, browser, logger }: SessionParams) {
     this.id_ = id;
@@ -38,6 +40,22 @@ export class Session {
     return this.browser_;
   }
 
+  get mainFrameId(): string | undefined {
+    return this.mainFrameId_;
+  }
+
+  set mainFrameId(frameId: string) {
+    this.mainFrameId_ = frameId;
+  }
+
+  get currentLoaderId(): string | undefined {
+    return this.currentLoaderId_;
+  }
+
+  set currentLoaderId(loaderId: string | undefined) {
+    this.currentLoaderId_ = loaderId;
+  }
+
   send<T>(method: string, params?: Record<string, Value>): Promise<T> {
     return this.browser_.send<T>({
       method,
@@ -46,8 +64,16 @@ export class Session {
     });
   }
 
-  waitFor<T>(eventName: string, timeout: number): Promise<T> {
-    return this.browser_.waitFor(`${eventName}.${this.id_}`, timeout);
+  waitFor<T>(
+    eventName: string,
+    timeout: number,
+    predicate?: (data: T) => boolean,
+  ): Promise<T> {
+    return this.browser_.waitFor(
+      `${eventName}.${this.id_}`,
+      timeout,
+      predicate,
+    );
   }
 
   get mousePosition(): MousePosition {
@@ -93,10 +119,10 @@ export class Session {
 
   async callFunctionOn(
     functionDeclaration: string,
-    node: Node,
+    objectId: Runtime.RemoteObjectId,
     params?: Record<string, Value>,
   ): Promise<Runtime.RemoteObject> {
-    params = { ...params, objectId: node.remoteObjectId, functionDeclaration };
+    params = { ...params, objectId, functionDeclaration };
     this.logger_.debug(
       `Calling 'Runtime.callFunctionOn' with params=${JSON.stringify(params)}`,
     );
@@ -119,25 +145,10 @@ export class Session {
     params?: Record<string, Value>,
   ): Promise<Runtime.RemoteObject> {
     const activeNode = await this.activeNode();
-    return await this.callFunctionOn(functionDeclaration, activeNode, params);
-  }
-
-  async awaitPromise(
-    promise: Runtime.RemoteObject,
-    params?: Record<string, Value>,
-  ): Promise<Runtime.RemoteObject> {
-    params = { ...params, promiseObjectId: promise.objectId };
-    const { result, exceptionDetails } = await this.send<{
-      result: Runtime.RemoteObject;
-      exceptionDetails?: Runtime.ExceptionDetails;
-    }>('Runtime.awaitPromise', params);
-
-    if (exceptionDetails) {
-      throw new Error(
-        `Encountered error awaiting promise: ${exceptionDetails.text}`,
-      );
-    }
-
-    return result;
+    return await this.callFunctionOn(
+      functionDeclaration,
+      activeNode.remoteObjectId,
+      params,
+    );
   }
 }

@@ -9,9 +9,9 @@ import {
   MouseNaturalScroll,
   MouseNaturalScrollOptionsSchema,
 } from './mouse.js';
-import { clampDelta, withPrefix } from './utils.js';
 import type { SessionContext } from '../context.js';
 import { DOM, Page } from '../types/index.js';
+import { clampDelta, withPrefix } from '../utils.js';
 
 export const createHoverSchema = (prefix?: string) =>
   ts.node({

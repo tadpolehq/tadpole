@@ -1,7 +1,7 @@
 import "components/redfin.kdl"
 
 main {
-  new_page {
+  new_page "https://www.redfin.com" {
     redfin.search text="=text"
     wait_until
     redfin.extract_from_card extract_to="addresses" {

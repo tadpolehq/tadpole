@@ -1,21 +1,31 @@
 import * as ts from '@tadpolehq/schema';
 import { SessionActionRegistry, type IAction } from './base.js';
+import { Goto, GotoOptions } from './page.js';
 import type { BrowserContext } from '../context.js';
 import { Session } from '../session.js';
 
-export const BaseBrowserNewPageSchema = ts.node({
+export const BaseNewPageSchema = ts.node({
+  args: ts.args([ts.expression(ts.string())]),
+  options: GotoOptions,
   execute: ts.slot(ts.children(ts.anyOf(SessionActionRegistry))),
 });
 
-export type BrowserNewPageParams = ts.output<typeof BaseBrowserNewPageSchema>;
+export type NewPageParams = ts.output<typeof BaseNewPageSchema>;
 
-export const BrowserNewPageParser = ts.into(
-  BaseBrowserNewPageSchema,
-  (v): IAction<BrowserContext> => new BrowserNewPage(v),
+export const NewPageParser = ts.into(
+  BaseNewPageSchema,
+  (v): IAction<BrowserContext> => new NewPage(v),
 );
 
-export class BrowserNewPage implements IAction<BrowserContext> {
-  constructor(private params_: BrowserNewPageParams) {}
+export class NewPage implements IAction<BrowserContext> {
+  private goto_: Goto;
+
+  constructor(private params_: NewPageParams) {
+    this.goto_ = new Goto({
+      args: this.params_.args,
+      options: this.params_.options,
+    });
+  }
 
   async execute(ctx: BrowserContext) {
     const { browserContextId } = await ctx.browser.send<{
@@ -43,6 +53,7 @@ export class BrowserNewPage implements IAction<BrowserContext> {
     });
 
     await pageSession.send('Page.enable');
+    await pageSession.send('Page.setLifecycleEventsEnabled', { enabled: true });
 
     const pageCtx = {
       $: ctx.$,
@@ -51,6 +62,8 @@ export class BrowserNewPage implements IAction<BrowserContext> {
         return this.session.browser;
       },
     };
+
+    await this.goto_.execute(pageCtx);
 
     try {
       for (const action of this.params_.execute) {

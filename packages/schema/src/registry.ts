@@ -44,7 +44,7 @@ export class Registry<
       return this.children_?.get(childName)?.get(name.substring(i + 1));
     }
 
-    return this.registered_.get(name);
+    return this.registered_.get(name) ?? this.parent?.get(name);
   }
 
   isRegistered(name: string): boolean {

@@ -98,21 +98,35 @@ export class Browser {
     });
   }
 
-  waitFor<T>(eventName: string, timeout: number): Promise<T> {
+  waitFor<T>(
+    eventName: string,
+    timeout: number,
+    predicate?: (data: T) => boolean,
+  ): Promise<T> {
     this.log_.debug(
       `Waiting for '${eventName}' to fire, will timeout after ${timeout}ms`,
     );
     return new Promise((resolve, reject) => {
-      this.eventEmitter_.once(eventName, (data) => {
+      const handler = (data: T) => {
+        if (predicate && !predicate(data)) {
+          this.log_.debug(
+            `Event received for ${eventName}, but predicate returned false.`,
+          );
+          return;
+        }
+
         clearTimeout(timeoutId);
+        this.eventEmitter_.removeListener(eventName, handler);
         this.log_.debug(
           `Event emitted for ${eventName} with params ${JSON.stringify(data)}`,
         );
-        resolve(data as T);
-      });
+        resolve(data);
+      };
+
+      this.eventEmitter_.on(eventName, handler);
 
       const timeoutId = setTimeout(() => {
-        this.eventEmitter_.removeListener(eventName, resolve);
+        this.eventEmitter_.removeListener(eventName, handler);
         reject(new Error(`Timed out waiting for event: ${eventName}`));
       }, timeout);
     });

@@ -23,3 +23,14 @@ export interface LayoutMetrics {
   cssVisualViewport: VisualViewport;
   cssContentSize: DOM.Rect;
 }
+
+export interface LifecycleEvent {
+  frameId: string;
+  loaderId: string;
+  name: string;
+}
+
+export interface Frame {
+  id: string;
+  loaderId: string;
+}

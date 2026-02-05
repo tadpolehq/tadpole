@@ -39,7 +39,7 @@ export class Extract implements IAction<SessionContext> {
     const functionDeclaration = `function() {${functionBody}}`;
     const result = await ctx.session.callFunctionOn(
       functionDeclaration,
-      activeNode,
+      activeNode.remoteObjectId,
       { returnByValue: true },
     );
     const path = this.params_.args[0].resolve(ctx.$.expressionContext);

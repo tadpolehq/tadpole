@@ -42,7 +42,7 @@ abstract class BaseQuerySelector implements IAction<SessionContext> {
 
     const result = await ctx.session.callFunctionOn(
       functionDeclaration,
-      activeNode,
+      activeNode.remoteObjectId,
       params,
     );
 
@@ -142,7 +142,6 @@ export class WaitFor implements IAction<SessionContext> {
           reject('Timed out after ${timeout}ms');
         }, ${timeout});
         const observer = new MutationObserver((mutations) => {
-        console.log(mutations);
           if (${predicate}) {
             clearTimeout(timeout);
             observer.disconnect();
@@ -158,11 +157,11 @@ export class WaitFor implements IAction<SessionContext> {
     }
     `;
 
-    const promise = await ctx.session.callFunctionOn(
+    await ctx.session.callFunctionOn(
       functionDeclaration,
-      activeNode,
+      activeNode.remoteObjectId,
+      { awaitPromise: true },
     );
-    await ctx.session.awaitPromise(promise);
     ctx.$.log.debug(`Predicate ${predicate} satisfied`);
   }
 }

@@ -1,10 +1,18 @@
 module airbnb {
-  action search {
-    goto "https://www.airbnb.com/"
-    parallel {
-      airbnb.maybe_close_dialog
-      wait_for { $ "#bigsearch-query-location-input"; as_boolean }
+  browser_action open {
+    new_page "https://airbnb.com" {
+      wait_until "networkAlmostIdle"
+      parallel {
+        airbnb.maybe_close_dialog
+        wait_for { $ "#bigsearch-query-location-input"; as_boolean }
+      }
+      mouse.natural_move "=jitter(25, 10)" "=jitter(30, 20)"
+      slot
     }
+  }
+
+  action search {
+    log "=format('Searching for {0}', text)"
     $ "#bigsearch-query-location-input" {
       type "=text" keyboardtype.delay="=random() * 250"
     }
@@ -15,14 +23,16 @@ module airbnb {
   }
 
   action maybe_close_dialog {
+    log "Closing dialog if pops up..."
     maybe {
       wait_for { $ "div[role='dialog']"; as_boolean }
+      log "Found dialog, closing..."
+      sleep 2500
       $ "div[role='dialog'] button" { click }
     }
   }
 
   action load_each_page {
-    wait_for { $ "#site-content nav div"; as_boolean }
     parallel {
       airbnb.maybe_close_dialog
       wait_for { $ "#site-content nav div"; as_boolean }
@@ -43,7 +53,7 @@ module airbnb {
 }
 
 main {
-  new_page {
+  airbnb.open {
     airbnb.search text="Miami, Florida"
     airbnb.load_each_page {
       $$ "[itemProp='itemListElement']" {

@@ -35,7 +35,7 @@ export class Filter implements IAction<SessionContext> {
     const functionDeclaration = `function() { return this.filter(e => !!(${predicate})); }`;
     const result = await ctx.session.callFunctionOn(
       functionDeclaration,
-      activeNode,
+      activeNode.remoteObjectId,
     );
 
     ctx.session.pushNode(
@@ -135,7 +135,7 @@ export class Loop implements IAction<SessionContext> {
     while (true) {
       const result = await ctx.session.callFunctionOn(
         functionDeclaration,
-        activeNode,
+        activeNode.remoteObjectId,
         params,
       );
       if (!result.value) break;
@@ -169,5 +169,36 @@ export class Maybe implements IAction<SessionContext> {
     } catch (err) {
       ctx.$.log.debug(`Continuing with exception: ${err}`);
     }
+  }
+}
+
+export function BaseParallelSchema<TCtx>(
+  registry: ts.IRegistry<ts.Node, any, ts.Type<any, IAction<TCtx>>>,
+) {
+  return ts.node({
+    execute: ts.slot(ts.children(ts.anyOf(registry))),
+  });
+}
+
+export type ParallelParams<TCtx> = ts.output<
+  ReturnType<typeof BaseParallelSchema<TCtx>>
+>;
+
+export function ParallelParser<TCtx>(
+  registry: ts.IRegistry<ts.Node, any, ts.Type<any, IAction<TCtx>>>,
+) {
+  return ts.into(
+    BaseParallelSchema(registry),
+    (v): IAction<TCtx> => new Parallel(v),
+  );
+}
+
+export class Parallel<TCtx> implements IAction<TCtx> {
+  constructor(private params_: ParallelParams<TCtx>) {}
+
+  async execute(ctx: TCtx) {
+    await Promise.all(
+      this.params_.execute.map((action) => action.execute(ctx)),
+    );
   }
 }
