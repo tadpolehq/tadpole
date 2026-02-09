@@ -14,13 +14,11 @@ export type JSONRPCParams = {
 };
 
 export type BrowserParams = {
-  userAgent: string;
   webSocketDebuggerUrl: string;
   log: ILogger;
 };
 
 export class Browser {
-  private userAgent_: string;
   private webSocketDebuggerUrl_: string;
   private ws_: WebSocket | null;
   private methodId_: number;
@@ -28,8 +26,7 @@ export class Browser {
   private eventEmitter_: EventEmitter;
   private log_: ILogger;
 
-  constructor({ userAgent, webSocketDebuggerUrl, log }: BrowserParams) {
-    this.userAgent_ = userAgent;
+  constructor({ webSocketDebuggerUrl, log }: BrowserParams) {
     this.webSocketDebuggerUrl_ = webSocketDebuggerUrl;
     this.ws_ = null;
     this.methodId_ = 1;
@@ -67,10 +64,6 @@ export class Browser {
       });
       ws.close();
     });
-  }
-
-  get userAgent(): string {
-    return this.userAgent_;
   }
 
   send<T>({ method, params, sessionId = null }: JSONRPCParams): Promise<T> {

@@ -1,0 +1,8 @@
+module stealth {
+  action apply {
+    apply_identity windows
+    set_device_memory 16
+    set_hardware_concurrency 8
+    set_viewport height=1350 width=2560 screenHeight=1440
+  }
+}

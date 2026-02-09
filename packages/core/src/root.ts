@@ -52,10 +52,10 @@ export const BaseEvaluatorSchema = ts.node({});
 export class EvaluatorWrapper implements IEvaluator {
   constructor(private evaluators_: IEvaluator[]) {}
 
-  toJS(input: string): string {
+  toJS(input: string, ctx: ts.ExpressionContext): string {
     let result = input;
     for (const evaluator of this.evaluators_) {
-      result = evaluator.toJS(result);
+      result = evaluator.toJS(result, ctx);
     }
     return result;
   }

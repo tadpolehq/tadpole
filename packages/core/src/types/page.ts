@@ -34,3 +34,11 @@ export interface Frame {
   id: string;
   loaderId: string;
 }
+
+export interface Viewport {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  scale: number;
+}

@@ -1,6 +1,7 @@
 module airbnb {
   browser_action open {
-    new_page "https://airbnb.com" {
+    new_page {
+      goto "https://airbnb.com"
       parallel {
         airbnb.maybe_close_dialog
         wait_for { $ "#bigsearch-query-location-input"; as_boolean }

@@ -12,11 +12,13 @@ import * as keyboard from './keyboard.js';
 import * as mouse from './mouse.js';
 import * as output from './output.js';
 import * as page from './page.js';
+import * as stealth from './stealth.js';
 import * as utils from './utils.js';
 
 BrowserActionRegistry.register('new_page', browser.NewPageParser)
   .register('log', utils.LogParser)
   .register('parallel', control_flow.ParallelParser(BrowserActionRegistry))
+  .register('random', utils.RandomParser(BrowserActionRegistry))
   .register('sleep', utils.SleepParser);
 
 EvaluatorRegistry.register('$', evaluators.QuerySelectorParser)
@@ -28,6 +30,7 @@ EvaluatorRegistry.register('$', evaluators.QuerySelectorParser)
 
 SessionActionRegistry.register('$', dom.QuerySelectorParser)
   .register('$$', dom.QuerySelectorAllParser)
+  .register('apply_identity', stealth.ApplyIdentityParser)
   .register('click', interaction.ClickParser)
   .register('extract', output.ExtractParser)
   .register('filter', control_flow.FilterParser)
@@ -37,6 +40,12 @@ SessionActionRegistry.register('$', dom.QuerySelectorParser)
   .register('loop', control_flow.LoopParser)
   .register('maybe', control_flow.MaybeParser)
   .register('parallel', control_flow.ParallelParser(SessionActionRegistry))
+  .register('random', utils.RandomParser(SessionActionRegistry))
+  .register('screenshot', utils.ScreenshotParser)
+  .register('set_device_memory', stealth.SetDeviceMemoryParser)
+  .register('set_hardware_concurrency', stealth.SetHardwareConcurrencyParser)
+  .register('set_viewport', stealth.SetViewportParser)
+  .register('set_webgl_vendor', stealth.SetWebGLVendorParser)
   .register('type', interaction.TypeParser)
   .register('wait_for', dom.WaitForParser)
   .register('wait_until', page.WaitUntilParser)

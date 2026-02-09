@@ -1,13 +1,10 @@
 import * as ts from '@tadpolehq/schema';
 import { SessionActionRegistry, type IAction } from './base.js';
-import { Goto, GotoOptions } from './page.js';
 import type { BrowserContext } from '../context.js';
 import { Session } from '../session.js';
 import type { Page } from '../types/index.js';
 
 export const BaseNewPageSchema = ts.node({
-  args: ts.args([ts.expression(ts.string())]),
-  options: GotoOptions,
   execute: ts.slot(ts.children(ts.anyOf(SessionActionRegistry))),
 });
 
@@ -19,14 +16,7 @@ export const NewPageParser = ts.into(
 );
 
 export class NewPage implements IAction<BrowserContext> {
-  private goto_: Goto;
-
-  constructor(private params_: NewPageParams) {
-    this.goto_ = new Goto({
-      args: this.params_.args,
-      options: this.params_.options,
-    });
-  }
+  constructor(private params_: NewPageParams) {}
 
   async execute(ctx: BrowserContext) {
     const { browserContextId } = await ctx.browser.send<{
@@ -53,6 +43,7 @@ export class NewPage implements IAction<BrowserContext> {
       logger: ctx.$.log.child({ sessionId }),
     });
 
+    await pageSession.send('Network.enable');
     await pageSession.send('Page.enable');
     await pageSession.send('Page.setLifecycleEventsEnabled', { enabled: true });
 
@@ -61,6 +52,7 @@ export class NewPage implements IAction<BrowserContext> {
       ({ frame }) => {
         if (frame.id === pageSession.mainFrameId) {
           pageSession.currentLoaderId = frame.loaderId;
+          pageSession.clearDocumentNode();
         }
       },
     );
@@ -72,8 +64,6 @@ export class NewPage implements IAction<BrowserContext> {
         return this.session.browser;
       },
     };
-
-    await this.goto_.execute(pageCtx);
 
     try {
       for (const action of this.params_.execute) {

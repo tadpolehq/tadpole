@@ -1,5 +1,6 @@
 main {
-  new_page "https://en.wikipedia.org/wiki/Lexical_analysis" {
+  new_page {
+    goto "https://en.wikipedia.org/wiki/Lexical_analysis"
     $$ ".mw-heading" {
       for_each {
         hover scroll.delay="=0.1"

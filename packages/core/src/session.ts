@@ -18,6 +18,7 @@ export interface MousePosition {
 export class Session {
   private id_: string;
   private browser_: Browser;
+  private documentNode_: Node | null;
   private nodeStack_: Node[];
   private mousePosition_: MousePosition;
   private logger_: ILogger;
@@ -27,6 +28,7 @@ export class Session {
   constructor({ id, browser, logger }: SessionParams) {
     this.id_ = id;
     this.browser_ = browser;
+    this.documentNode_ = null;
     this.nodeStack_ = [];
     this.mousePosition_ = { x: 0, y: 0 };
     this.logger_ = logger;
@@ -38,6 +40,10 @@ export class Session {
 
   get browser(): Browser {
     return this.browser_;
+  }
+
+  get documentNode(): Node | null {
+    return this.documentNode_;
   }
 
   get mainFrameId(): string | undefined {
@@ -77,7 +83,7 @@ export class Session {
   }
 
   on<T>(eventName: string, handler: (data: T) => void): () => void {
-    return this.browser_.on(eventName, handler);
+    return this.browser_.on(`${eventName}.${this.id_}`, handler);
   }
 
   get mousePosition(): MousePosition {
@@ -100,25 +106,29 @@ export class Session {
     return this.nodeStack_.pop();
   }
 
-  async activeNode(): Promise<Node> {
-    let node = this.activeNode_;
-    if (node === null) {
-      this.logger_.debug(
-        "No node active in context, calling 'Runtime.evaluate' to fetch 'document'",
-      );
-      const { result } = await this.send<{ result: Runtime.RemoteObject }>(
-        'Runtime.evaluate',
-        {
-          expression: 'document',
-        },
-      );
+  clearDocumentNode() {
+    this.documentNode_ = null;
+  }
 
-      node = new Node({ remoteObjectId: result.objectId! });
-      this.nodeStack_.push(node);
+  async activeNode(): Promise<Node> {
+    const node = this.activeNode_;
+    if (node !== null) {
+      this.logger_.debug(`Using context objectId=${node.remoteObjectId}`);
+      return node;
     }
 
-    this.logger_.debug(`Using context objectId=${node.remoteObjectId}`);
-    return node;
+    this.logger_.debug(
+      "No node active in context, calling 'Runtime.evaluate' to fetch 'document'",
+    );
+    const { result } = await this.send<{ result: Runtime.RemoteObject }>(
+      'Runtime.evaluate',
+      {
+        expression: 'document',
+      },
+    );
+
+    this.documentNode_ = new Node({ remoteObjectId: result.objectId! });
+    return this.documentNode_;
   }
 
   async callFunctionOn(
@@ -127,9 +137,6 @@ export class Session {
     params?: Record<string, Value>,
   ): Promise<Runtime.RemoteObject> {
     params = { ...params, objectId, functionDeclaration };
-    this.logger_.debug(
-      `Calling 'Runtime.callFunctionOn' with params=${JSON.stringify(params)}`,
-    );
     const { result, exceptionDetails } = await this.send<{
       result: Runtime.RemoteObject;
       exceptionDetails?: Runtime.ExceptionDetails;

@@ -12,6 +12,5 @@
 - Add: wait_until supports life cycle events like networkIdle and networkAlmostIdle
 - Add: log action
 - Add: format expression function
-- Change: new_page now requires a url argument
 - Improve: consistent logging across actions
 - Fix: struct errors wrong length check

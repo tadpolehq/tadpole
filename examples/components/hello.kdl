@@ -5,7 +5,8 @@ module hello {
   }
 
   browser_action open {
-    new_page "https://en.wikipedia.org" {
+    new_page {
+      goto "https://en.wikipedia.org"
       slot
     }
   }

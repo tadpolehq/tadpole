@@ -75,8 +75,9 @@ async function launchChrome(
     `--remote-debugging-port=${port}`,
     `--user-data-dir=${userDataDir}`,
     `--window-size=${windowWidth},${windowHeight}`,
+    '--disable-blink-features=AutomationControlled',
   ];
-  if (headless) args.push('--headless');
+  if (headless) args.push('--headless=new');
 
   const child = await spawnAsync(
     chromePath,

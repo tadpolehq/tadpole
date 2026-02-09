@@ -1,5 +1,6 @@
 main {
-  new_page "https://news.ycombinator.com/news" {
+  new_page {
+    goto "https://news.ycombinator.com/news"
     $$ "span.titleline" {
       filter {
         if {
