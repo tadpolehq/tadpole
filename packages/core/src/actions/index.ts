@@ -18,6 +18,7 @@ import * as utils from './utils.js';
 BrowserActionRegistry.register('new_page', browser.NewPageParser)
   .register('log', utils.LogParser)
   .register('parallel', control_flow.ParallelParser(BrowserActionRegistry))
+  .register('random', utils.RandomParser(BrowserActionRegistry))
   .register('sleep', utils.SleepParser);
 
 EvaluatorRegistry.register('$', evaluators.QuerySelectorParser)
@@ -39,6 +40,7 @@ SessionActionRegistry.register('$', dom.QuerySelectorParser)
   .register('loop', control_flow.LoopParser)
   .register('maybe', control_flow.MaybeParser)
   .register('parallel', control_flow.ParallelParser(SessionActionRegistry))
+  .register('random', utils.RandomParser(SessionActionRegistry))
   .register('screenshot', utils.ScreenshotParser)
   .register('set_device_memory', stealth.SetDeviceMemoryParser)
   .register('set_hardware_concurrency', stealth.SetHardwareConcurrencyParser)

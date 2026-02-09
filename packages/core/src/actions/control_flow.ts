@@ -173,7 +173,11 @@ export class Maybe implements IAction<SessionContext> {
 }
 
 export function BaseParallelSchema<TCtx>(
-  registry: ts.IRegistry<ts.Node, any, ts.Type<any, IAction<TCtx>>>,
+  registry: ts.IRegistry<
+    ts.Node,
+    IAction<TCtx>,
+    ts.Type<ts.Node, IAction<TCtx>>
+  >,
 ) {
   return ts.node({
     execute: ts.slot(ts.children(ts.anyOf(registry))),
@@ -185,7 +189,11 @@ export type ParallelParams<TCtx> = ts.output<
 >;
 
 export function ParallelParser<TCtx>(
-  registry: ts.IRegistry<ts.Node, any, ts.Type<any, IAction<TCtx>>>,
+  registry: ts.IRegistry<
+    ts.Node,
+    IAction<TCtx>,
+    ts.Type<ts.Node, IAction<TCtx>>
+  >,
 ) {
   return ts.into(
     BaseParallelSchema(registry),

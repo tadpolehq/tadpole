@@ -29,6 +29,43 @@ export class Log implements IAction<BrowserContext> {
   }
 }
 
+export function BaseRandomSchema<TCtx>(
+  registry: ts.IRegistry<ts.Node, IAction<TCtx>, ts.Type<any, IAction<TCtx>>>,
+) {
+  return ts.node({
+    execute: ts.slot(ts.children(ts.anyOf(registry))),
+  });
+}
+
+export type RandomParams<TCtx> = ts.output<
+  ReturnType<typeof BaseRandomSchema<TCtx>>
+>;
+
+export function RandomParser<TCtx>(
+  registry: ts.IRegistry<
+    ts.Node,
+    IAction<TCtx>,
+    ts.Type<ts.Node, IAction<TCtx>>
+  >,
+) {
+  return ts.into(
+    BaseRandomSchema(registry),
+    (v): IAction<TCtx> => new Random(v),
+  );
+}
+
+export class Random<TCtx> implements IAction<TCtx> {
+  constructor(private params_: RandomParams<TCtx>) {}
+
+  async execute(ctx: TCtx) {
+    const action =
+      this.params_.execute[
+        Math.floor(Math.random() * this.params_.execute.length)
+      ]!;
+    await action.execute(ctx);
+  }
+}
+
 export const BaseViewportSchema = ts.properties({
   x: ts.optional(ts.number()),
   y: ts.optional(ts.number()),
