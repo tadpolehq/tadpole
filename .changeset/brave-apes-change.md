@@ -7,7 +7,9 @@
 - Add: filter action (evaluators to filter out specific elements)
 - Add: while action (loop while evaluators return true)
 - Add: maybe action (action that's allowed to fail)
-- Add: as_boolean evaluator (casting values to boolean)
+- Add: as_bool evaluator (casting values to boolean)
+- Add: as_float evaluator (casting strings to floats)
+- Add: as_int evaluator (casting strings to integers)
 - Add: child evaluator (loads a child element at the provided index)
 - Add: wait_until supports life cycle events like networkIdle and networkAlmostIdle
 - Add: log action

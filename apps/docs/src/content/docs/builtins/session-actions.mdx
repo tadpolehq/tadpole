@@ -43,12 +43,14 @@ $$ ".result-card" {
 }
 ```
 
+## `apply_identity`
+
 ## `click`
 Clicks on the active element. It uses a natural movement (bezier curve) to hover
 the mouse over the element and optionally delay before clicking the target.
 
 ### Options
-- `delay`: The delay between hovering and clicking the target. Can be a static number or expression.
+- `delay`: The delay between hovering and clicking the target. Can be a static number or expression. Defualts to `0`.
 - `mouseclick.*`: Prefixed options. See [`mouse.click`](#mouseclick) options
 - `hover.*`: Prefixed options. See [`hover`](#hover) options
 
@@ -140,6 +142,24 @@ Navigates the current browser tab to a specified URL.
 - `wait_until`: The event to wait for after navigating (`load` or `domcontentloaded`). Defaults to `load`.
 - `timeout`: The timeout (in ms) for the `wait_until` event to fire. Defaults to `5000`. Can be a static number or expression.
 
+## `loop`
+
+## `maybe`
+
+## `parallel`
+
+## `random`
+
+## `screenshot`
+
+## `set_device_memory`
+
+## `set_hardware_concurrency`
+
+## `set_viewport`
+
+## `set_webgl_vendor`
+
 ## `type`
 Clicks on the active element and types in the provided text.
 
@@ -158,7 +178,7 @@ and a bezier curve to move the mouse.
 If delay evaluates to a negative number, it will be treated as 0 and ignored.
 </Aside>
 
-## `sleep`
+## `wait_for`
 
 ## `wait_until`
 
