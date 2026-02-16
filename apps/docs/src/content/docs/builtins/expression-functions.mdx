@@ -1,18 +1,54 @@
 ---
 title: Expression Functions
 description: Learn about built-in expression functions
+tableOfContents:
+  minHeadingLevel: 2
+  maxHeadingLevel: 2
 ---
 
 This page defines all of the built-in functions added to `expr-eval`.
 
 ## `chance`
+Returns true with the provided probability, false otherwise.
+
+### Args
+- `chance`: Probability between 0 and 1.
+
+## `env`
+Gets the environment variable with the provided name. It will attempt to parse booleans and
+numbers. For booleans, it must be the string `true` and `false`.
+
+### Args
+- `name`: The environment variable name.
 
 ## `gauss`
+Produces a random number with a normal distribution.
+
+### Args
+- `mean`: The mean. Defaults to 0.
+- `stdDev`: The standard deviation. Defaults to 1.
 
 ## `jitter`
+Adds or subtracts a random "jitter" [-amt, amt) to the provided value.
+
+### Args
+- `value`: The initial value.
+- `amt`: The max amount of jitter to add or subtract.
 
 ## `min_to_ms`
+Converts the provided minutes into milliseconds.
+
+### Args
+- `n`: The number of minutes.
 
 ## `pick`
+Picks a random element from the provided array with equal probability.
+
+### Args
+- `l`: The array.
 
 ## `sec_to_ms`
+Converts the provided seconds into milliseconds.
+
+### Args
+- `n`: The number of seconds.

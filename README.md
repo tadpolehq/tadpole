@@ -38,17 +38,14 @@ See [Documentation](https://tadpolehq.com) to get started!
 **The Goal**
 The long term vision and goal I have for this project is to create a new standard way of web scraping.
 
-**Planned for 0.2.0**
-- **Control Flow**: Add maybe (effectively try/catch) and loop (do whiles)
-- **DOMPick**: Used to select elements by index
-- **DOMFilter**: Used to filter elements using evaluators
-- **More Evaluators**: Type casting, regex, exists
+**Planned 0.3.0**
+- **Piping**: Allowing different files to chain input/output through external triggers (message queues, AMQP).
+- **Plugins**: Allow dynamic extension of the language runtime.
 - **Root Slots**: Support for top level dynamic placeholders
-- **Error Reporting**: More robust error reporting
-- **Logging**: More consistent logging from actions and add `log` action to global registry
+- **Static HTML Parser**: Add faster, static site parsing without a browser
+- **`launch` Action**: Create an action to specifically launch Chrome
 
-**0.3.0**
-- **Piping**: Allowing different files to chain input/output.
+**Beyond**
 - **Outputs**: Complex output sinks to databases, s3, kafka, etc.
 - **DAGs**: Use directed acylic graphs to create complex crawling scenarios and parallel compute.  
 

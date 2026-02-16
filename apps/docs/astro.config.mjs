@@ -24,16 +24,7 @@ export default defineConfig({
           label: 'Welcome',
           link: '/',
         },
-        {
-          label: 'Guides',
-          items: [
-            { label: 'Getting Started', link: '/guides/getting-started' },
-            {
-              label: 'Creating Reusable Modules',
-              link: '/guides/creating-reusable-modules',
-            },
-          ],
-        },
+        { label: 'Getting Started', link: '/getting-started' },
         {
           label: 'Language Overview',
           link: '/language-overview',
@@ -48,6 +39,23 @@ export default defineConfig({
               link: '/builtins/expression-functions',
             },
             { label: 'Evaluators', link: '/builtins/evaluators' },
+          ],
+        },
+        {
+          label: 'Guides',
+          items: [
+            {
+              label: 'Creating Reusable Modules',
+              link: '/guides/creating-reusable-modules',
+            },
+            {
+              label: 'Creating a Paginator',
+              link: '/guides/creating-a-paginator',
+            },
+            {
+              label: 'Configure Stealth Profiles',
+              link: '/guides/configure-stealth-profiles',
+            },
           ],
         },
         {

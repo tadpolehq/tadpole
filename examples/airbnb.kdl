@@ -35,15 +35,18 @@ module airbnb {
     airbnb.maybe_close_dialog
     wait_for { $ "#site-content nav div" }
     loop {
+      do {
+        mouse.natural_move "=jitter(25, 10)" "=jitter(25, 10)"
+        slot
+      }
       while {
         $ "#site-content nav div"; child -1; prop tagName; eq A
       }
-      do {
-        $ "#site-content" { hover }
-        slot
+      next {
         $ "#site-content nav div a:last-of-type" {
           click delay="=random() * 150" hover.delay="=random() * 100"
         }
+        sleep "=random() * 5000"
       }
     }
   }

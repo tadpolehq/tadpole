@@ -1,0 +1,70 @@
+---
+title: Configure Stealth Profiles
+description: Learn how to setup basic stealth settings to run in headless
+---
+
+Tadpole is designed to also provide features that the ability to appear as a human user.
+
+We are going to write a module to create reusable actions to create believable human profiles.
+
+## Creating Real World Identities
+We are going to create several composed actions that represent real world devices. For example,
+Apple M2s have a predictable amount of memory, hardware concurrency and viewport size that we should
+match to appear "real".
+
+```kdl
+module stealth {
+  // Apple M2 Pro
+  action apply_apple_m2 {
+    apply_identity mac
+    set_webgl_vendor "Apple Inc." "Apple M2"
+    set_device_memory 16
+    set_hardware_concurrency 8
+    set_viewport 1440 900 deviceScaleFactor=2
+  }
+
+  // Windows Desktop
+  action apply_windows_16_8 {
+    apply_identity windows
+    set_webgl_vendor "Google Inc. (Intel)" "ANGLE (Intel, Intel(R) UHD Graphics 620 Direct3D11 vs_5_0 ps_5_0)"
+    set_device_memory 16
+    set_hardware_concurrency 8
+    set_viewport 1920 1080
+  }
+
+  // Windows Budget Laptop
+  action apply_windows_8_4 {
+    apply_identity windows
+    set_webgl_vendor "Google Inc. (Intel)" "ANGLE (Intel, Intel(R) UHD Graphics 620 Direct3D11 vs_5_0 ps_5_0)"
+    set_device_memory 8
+    set_hardware_concurrency 4
+    set_viewport 1366 768
+  }
+}
+```
+
+## Using One of the Identities in Practice
+Ideally, we want to keep a consistent identity for a single IP address. Constantly switching
+can be a red flag. We are going to use the `seed` option from random to ensure if our IP always
+uses the same identity. We can also provide `weights` to try to match real world usage. This can
+provide a consistent distribution across proxies.
+
+```kdl
+module stealth {
+  ...
+
+  action apply {
+    random weights="20,30,50" seed="=stealthSeed" {
+      stealth.apply_apple_m2
+      stealth.apply_windows_16_8
+      stealth.apply_windows_8_4
+    }
+  }
+}
+```
+
+ ## What else?
+ The stealth module is brand new in Tadpole. More sophisticated anti bot models will
+ require additional measures. This is just the beginning, but it will pass basic
+ bot detectors.
+ 

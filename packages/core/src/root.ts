@@ -6,7 +6,11 @@ import {
   type IAction,
   type IEvaluator,
 } from './actions/index.js';
-import type { BrowserContext, SessionContext } from './context.js';
+import type {
+  BrowserContext,
+  EvaluatorContext,
+  SessionContext,
+} from './context.js';
 import { DefSchema } from './def.js';
 
 export const ValueTypeSchema = ts.expression(
@@ -52,7 +56,7 @@ export const BaseEvaluatorSchema = ts.node({});
 export class EvaluatorWrapper implements IEvaluator {
   constructor(private evaluators_: IEvaluator[]) {}
 
-  toJS(input: string, ctx: ts.ExpressionContext): string {
+  toJS(input: string, ctx: EvaluatorContext): string {
     let result = input;
     for (const evaluator of this.evaluators_) {
       result = evaluator.toJS(result, ctx);

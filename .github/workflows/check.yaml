@@ -1,0 +1,46 @@
+name: Check
+
+on:
+  pull_request:
+    paths:
+    - apps/**
+    - packages/**
+    - .github/workflows/check.yaml
+
+jobs:
+  check-types:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+    - name: Setup
+      uses: ./.github/actions/setup
+    - name: Run type checking
+      run: yarn check-types
+  format:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+    - name: Setup
+      uses: ./.github/actions/setup
+    - name: Run format check
+      run: yarn format:check
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+    - name: Setup
+      uses: ./.github/actions/setup
+    - name: Run linting
+      run: yarn lint
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+    - name: Setup
+      uses: ./.github/actions/setup
+    - name: Run tests
+      run: yarn tests

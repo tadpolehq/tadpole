@@ -1,14 +1,249 @@
 ---
 title: Evaluators
 description: Learn about built-in evaluators
+tableOfContents:
+  minHeadingLevel: 2
+  maxHeadingLevel: 2
 ---
+import { Aside } from '@astrojs/starlight/components';
 
 This page defines all of the built in evaluators.
 
+<Aside type="note">
+**Short-Circuit Rule:** If a preceding evaluator returns null or undefined, all subsequent evaluators
+in the chain will short-circuit and return undefined immediately. This prevents "Cannot read property of null" errors.
+</Aside>
+
 ## `$`
+Selects a single element using the provided selector.
+
+### Args
+- `selector`: The CSS selector used to select an element. Can be a static string or expression.
+
+### Usage
+```kdl
+$ ".element"
+```
+
+## `and`
+Logical and operator. All children nodes are treated as the right hand side of the operator and preceding
+evaluators as the left hand side.
+
+### Usage
+```kdl
+$ ".element"; and { text; matches "[a-zA-Z]+" }
+```
+
+## `as_bool`
+Casts the result of the preceding evaluators into a boolean. In addition to the falsy values in JavaScript,
+this also treats empty arrays as falsy and the strings provided in `falsyValues` as false.
+
+### Options
+- `falsyValues`: Comma seperated string of values that are considered to be falsy. Defaults to `"false,0,no"`.
+
+### Usage
+```kdl
+$ "#element"; as_bool // whether or not element exists
+$ ".passed"; as_bool falsyValues="negative" // custom falsy value
+```
+
+## `as_float`
+Casts the result of the preceding evaluators into a float. It will cleanup commas,
+and other symbols in the value before parsing.
+
+### Usage
+```kdl
+$ "#price"; text; as_float
+```
+
+## `as_int`
+Casts the result of the preceding evaluators into an integer. It will cleanup commas,
+and other symbols in the value before parsing.
+
+### Options
+- `radix`: The radix between 2 and 32. Defaults to 10.
+
+### Usage
+```kdl
+$ "#price"; text; as_int
+$ "#hexcode"; text; as_int radix=16
+```
 
 ## `attr`
+Gets the value for provided attribute name. The preceding evaluators should return an Element.
+
+### Usage
+```kdl
+$ ".a"; attr href
+```
+
+## `child`
+Gets the child element at the provided index. Negative indexing is supported. The preceding
+evaluators should return an Element.
+
+### Args
+- `index`: The index of the child. Negative indexing is supported.
+
+### Usage
+```kdl
+// Get the first child
+$ "a"; child 1
+// Get the last child
+$ "a"; child -1
+```
+
+## `default`
+Provides a default if the preceding evaluators return a falsy value.
+
+### Args
+- `value`: The default value can be a static string, number or an expression.
+
+### Usage
+```kdl
+$ "#get-element"; text; default "No Value"
+```
+
+## `deq`
+Dynamic equality operator. All children nodes are treated as the right hand side of the operator and the
+preceding evaluators as the left hand side.
+
+### Usage
+```kdl
+$ ".commenter"; text; deq { root; $ "#author"; text}
+```
+
+## `dne`
+Dynamic inequality operator. All children nodes are treated as the right hand side of the operator and the
+preceding evaluators as the left hand side.
+
+### Usage
+```kdl
+$ ".commenter"; text; dne { root; $ "#author"; text}
+```
+
+## `eq`
+Static equality operator. The preceding evaluators are treated as the left hand side of the operator.
+
+###
+- `value`: The value to compare to, can be a static string, number or an expression.
+
+### Usage
+```kdl
+$ "#author"; eq "Zach Perkitny"
+$ "#status_code"; eq 200
+```
+
+## `extract`
+Extracts the provided regular expression from the preceding evalautors.
+
+### Args
+- `regex`: The regular expression. Can be a static string or expression.
+
+### Options
+- `index`: The capturing group index. Group indexing starts at 1, 0 returns the entire match. Defaults to 1.
+- `caseSensitive`: Whether or not for the extraction to be case sensistive. Defaults to `true`.
+
+### Usage
+```kdl
+$ "#contact"; text; extract "Primary Phone: ([0-9]{3}\-[0-9]{3}\-[0-9]{4})"
+```
 
 ## `func`
+Calls a custom JavaScript function. It is a useful fallback if there isn't an existing
+evaluator shorthand for some desired functionality.
+
+### Args
+- `func`: The function definition.
+
+### Usage
+```kdl
+$ "#some-id"; func "(e) => e.hasAttributes()"
+```
+
+## `matches`
+Checks if the preceding evalutors match the provided regular expression.
+
+### Args
+- `regex`: The regular expression to match against.
+
+### Options
+- `caseSensitive`: Whether or not for the matching to be case sensistive. Defaults to `true`.
+
+### Usage
+```kdl
+$ ".title"; matches "(Python|Javascript|C++|Rust)" caseSensitive=#false
+```
+
+## `ne`
+Static equality operator. The preceding evaluators are treated as the left hand side of the operator.
+
+### Args
+- `value`: The value to compare to, can be a static string, number or an expression.
+
+### Usage
+```kdl
+$ "#author"; ne "Zach Perkitny"
+$ ".star_count"; ne 0
+```
+
+## `not`
+Logical not operator. The preceding evaluators are grouped as the operand.
+
+### Usage
+```kdl
+$ "#is-active"; text; as_bool; not
+```
+
+## `or`
+Logical or operator. If the preceding evaluator is falsy, it executes and returns the result of the children nodes.
+
+### Usage
+```kdl
+$ ".on-sale"; or { ".title"; matches "sale" caseSensitive=#false }
+```
+
+## `prop`
+Access the provided property on the result of the preceding evaluators.
+
+### Args
+- `name`: The name of the property to access.
+
+### Usage
+```kdl
+$ "#posts-container"; prop children; prop length
+```
+
+## `replace`
+Replaces the provided pattern (literal string or regex) with provided replacement string.
+
+### Args
+- `pattern`: The pattern to match against. Can be a static string or expression.
+- `replacement`: The replacement value.
+
+### Options
+- `all`: Whether to replace all matches of pattern. Defaults to `false`.
+- `regex`: Whether or not to treat `pattern` as a regular expression. Defaults to `false`.
+- `caseSensitive`: If `regex` is true, whether or not for the pattern match to be case sensistive. Defaults to `true`.
+
+### Usage
+```kdl
+$ ".price"; replace "$" ""
+$ ".price"; replace "[^0-9.]" "" regex=#true
+```
+
+## `root`
+Resets the evaluation context to the original value/element.
+This allows you to "branch" out and perform multiple independent checks on the same starting data.
+
+### Usage
+```kdl
+$ ".sale-price"; or { root; $ ".price" }
+```
 
 ## `text`
+Gets the inner text of the element.
+
+### Usage
+```kdl
+$ "#bio"; text
+```

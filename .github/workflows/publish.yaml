@@ -8,6 +8,7 @@ on:
     - apps/cli/**
     - packages/core/**
     - packages/schema/**
+    - packages/utils/**
     - .changeset/**
     - .github/workflows/publish.yaml
 
@@ -20,10 +21,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v5
-
     - name: Setup
       uses: ./.github/actions/setup
-
     - name: Create Release Pull Request or Publish to npm
       id: changesets
       uses: changesets/action@v1

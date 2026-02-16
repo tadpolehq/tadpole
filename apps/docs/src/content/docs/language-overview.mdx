@@ -20,6 +20,7 @@ is a structured tree where every node maps to a specific operation in the browse
 ### Contextual Constraints
 In Tadpole, *where* a node is placed **matters**. For example:
 - A Session Action (like `click`) must be a child of a Browser Action that creates a session (like `new_page`).
+- A Browser Action can be used in both a Browser and Session context.
 - Meta nodes must be defined at the top level of the script.
 
 ```kdl
@@ -57,7 +58,6 @@ main {
 <Aside type="note">
 User defined evaluators can take extra properties that will be injected as variables into the expression context during execution.
 </Aside>
-
 
 <Aside type="note">
 When using Import Nodes with Git repositories, Tadpole automatically clones and caches the remote module,

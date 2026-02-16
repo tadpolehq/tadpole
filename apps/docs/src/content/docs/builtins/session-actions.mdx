@@ -1,6 +1,9 @@
 ---
 title: Session Actions
 description: Learn about built-in session actions
+tableOfContents:
+  minHeadingLevel: 2
+  maxHeadingLevel: 2
 ---
 import { Aside } from '@astrojs/starlight/components';
 
@@ -43,12 +46,27 @@ $$ ".result-card" {
 }
 ```
 
+## `apply_identity`
+Applies a new identity for the provided `platform`. It will always use Chrome/Chromium. It will also
+override any high entropy user agent metadata headers.
+
+### Args
+- `platform`: The platform to generate the identity for. Options are `windows`, `mac` and `linux`.
+
+### Options
+- `limit`: The number of recent browser releases to consider. It is better to keep this value lower if stealth is required. Defaults to `3`.
+
+### Usage
+```kdl
+apply_identity windows // This will apply a Windows UA using a recent browser release
+```
+
 ## `click`
 Clicks on the active element. It uses a natural movement (bezier curve) to hover
 the mouse over the element and optionally delay before clicking the target.
 
 ### Options
-- `delay`: The delay between hovering and clicking the target. Can be a static number or expression.
+- `delay`: The delay between hovering and clicking the target. Can be a static number or expression. Defaults to `0`.
 - `mouseclick.*`: Prefixed options. See [`mouse.click`](#mouseclick) options
 - `hover.*`: Prefixed options. See [`hover`](#hover) options
 
@@ -60,6 +78,24 @@ If delay evaluates to a negative number, it will be treated as 0 and ignored.
 ```kdl
 $ "#submit-button" {
   click delay="=gauss(0.5, 0.25)"
+}
+```
+
+## `do`
+Executes the children nodes. Can be conditional by providing `if` and can be repeated by providing `n`.
+
+### Options
+- `if`: The execution condition. Can be an expression. Defaults to `undefined`.
+- `n`: The number of times to execute the body. Defaults to `1`.
+
+### Usage
+```kdl
+do if="=env('CHECK_SOMETHING')" {
+  ...
+}
+
+do n=3 {
+  ...
 }
 ```
 
@@ -77,7 +113,7 @@ we need to produce a value.
 
 <Aside type="note">
 If the path has a `[]` suffix, then it is treated as an array and subsequent extracts
-to the same path will append to it, as opposed to overriding. However, if you are extracting
+to the same path will **append** to it, as opposed to overriding. However, if you are extracting
 a collection, it will be an array and does not require the `[]` suffix.
 </Aside>
 
@@ -140,6 +176,194 @@ Navigates the current browser tab to a specified URL.
 - `wait_until`: The event to wait for after navigating (`load` or `domcontentloaded`). Defaults to `load`.
 - `timeout`: The timeout (in ms) for the `wait_until` event to fire. Defaults to `5000`. Can be a static number or expression.
 
+## `loop`
+Executes the actions in the `do` and `next` child nodes while the evaluators in the `if` child node return a truthy value.
+
+The actions in `do` are executed before the check and the actions in `next` are executed only if the check returns a truthy value.
+
+### Options
+- `some`: If the active node is a collection, return true if at least one element meets the predicate.
+
+### Usage
+```kdl
+loop {
+  do {
+    extract "data[]" {
+      ...
+    }
+  }
+  while {
+    $ "#pagination-next"; prop disabled; as_boolean; not
+  }
+  next {
+    $ "#pagination-next" { click }
+    wait_until
+  }
+}
+```
+
+## `maybe`
+Allows the children nodes to throw an exception. This is useful when there are instances when some event
+may or may not fire, i.e a dialog appearing to signup for a newsletter.
+
+### Usage
+```kdl
+maybe {
+  wait_for "#dialog"
+  $ "#dialog .close-button" { click }
+}
+```
+
+## `once`
+Executes the action in the `do` node if the evaluators in the `if` node evaluate to `true`.
+
+### Usage
+```kdl
+once {
+  if { $ "#username" }
+  do {
+    $ "#username" { type "=env('USERNAME')" }
+    $ "#password" { type "=env('PASSWORD')" }
+    $ "button[type='submit']" { click }
+  }
+}
+```
+
+## `parallel`
+Executes the children node in parallel.
+
+### Usage
+```kdl
+parallel {
+  screenshot loading
+  wait_for "#form"
+  wait_for ".container"
+}
+```
+
+<Aside type="caution">
+You should not execute multiple actions that interact with the page like `click`,
+`hover`, etc in parallel, as they will cause race conditions with the internal state.
+It is safe to use multiple readers and at most one writer action in parallel.
+</Aside>
+
+## `random`
+Executes only one of the children nodes. This action supports weights.
+
+### Options
+- `weights`: A comma separated list of integers representing the weight of its corresponding child. Defaults to `undefined`.
+  - If the length of weights is less than the children nodes, the weight defaults to `1`.
+  - They do not need to add up to `100` or `1.0`, the relative probability is automatically calculated.
+
+### Usage
+```kdl
+// Select windows 95% of the time, linux 5% of the time
+random weights="95,5" {
+  apply_identity windows
+  apply_identity linux
+}
+```
+
+## `screenshot`
+Takes a screenshot and saves it to the provided path.
+
+### Args
+- `path`: The path to save to. Can be a static string or expression.
+
+### Options
+- `format`: The format to save the screenshot in. Options are `jpeg`, `png` and `webp`. Default to `png`.
+- `quality`: If using jpeg, the image quality between 0 and 100. Defaults to `100`.
+- `clip.`: Prefixed options to clip the screenshot. Clipping is enabled if any of these values are passed.
+  - `x`: The x offset. Defaults to 0.
+  - `y`: The y offset. Defaults to 0.
+  - `width`: The width. Defaults to 1280.
+  - `height`: The height. Defaults to 720.
+  - `scale`: The scale factor. Defaults to 1.
+
+### Usage
+```kdl
+screenshot "path/to/file"
+screenshot "path/to/file" format=jpeg
+screenshot "path/to/file" clip.x=100 clip.y=100 clip.width=100 clip.height=100
+```
+
+<Aside type="note">
+If the extension is omitted, it is automatically appended to the end of the file name.
+</Aside>
+
+## `set_device_memory`
+Overrides the reported device memory in the user agent metadata headers.
+
+### Args
+- `memory`: The device memory report (in GB)
+
+### Usage
+```kdl
+set_device_memory 8
+```
+
+<Aside type="note">
+**When aiming for stealth**: This can be useful
+to hide a very low memory amount in a server environment.
+</Aside>
+
+## `set_hardware_concurrency`
+Overrides the reported hardware concurrency.
+
+### Args
+- `concurrency`: The hardware concurrency to report.
+
+### Usage
+```kdl
+set_hardware_concurrency 4
+```
+
+<Aside type="note">
+**When aiming for stealth**: This is also useful to hide low CPU amounts like 1 or 2
+in server environments.
+</Aside>
+
+## `set_viewport`
+Overrides the viewport metrics.
+### Args
+- `width`: The viewport width.
+- `height`: The viewport height.
+
+### Options
+- `deviceScaleFactor`: The scale factor. Defaults to `1`.
+- `mobile`: Whether to emulate a mobile device. Defaults to `false`.
+- `screenWidth`: The screen width. Defaults to `width` (emulating full screen).
+- `screenHeight`: The screen height. Defaults to `height` (emulating full screen).
+
+### Usage
+```kdl
+set_viewport 1920 1200 // maximized
+set_viewport 1920 1200 screenHeight=1009 // accounts for top bar
+```
+
+<Aside type="note">
+**When aiming for stealth**: This is *necessary* when using headless, because it
+defaults to an immediate bot red flag: `800x600`.
+</Aside>
+
+## `set_webgl_vendor`
+Overrides the reported WebGL vendor and renderer.
+
+### Args
+- `vendor`: The WebGL vendor to report.
+- `renderer`: The WebGL renderer to report.
+
+### Usage
+```kdl
+set_webgl_vendor "Google Inc. (Intel)" "ANGLE (Intel, Intel(R) UHD Graphics 620 Direct3D11 vs_5_0 ps_5_0)"
+set_webgl_vendor "Apple Inc." "Apple M1"
+```
+
+<Aside type="note">
+**When aiming for stealth**: This is *necessary* when running headless, because it
+defaults to an immediate bot red flag: `Google SwiftShader`.
+</Aside>
+
 ## `type`
 Clicks on the active element and types in the provided text.
 
@@ -158,9 +382,38 @@ and a bezier curve to move the mouse.
 If delay evaluates to a negative number, it will be treated as 0 and ignored.
 </Aside>
 
-## `sleep`
+## `wait_for`
+Waits for the children evaluators to return `true`. This is useful to wait for the addition/deletion of
+elements/attributes as internally it uses `Mutationobserver`.
+
+### Options
+- `timeout`: The maximum amount of time to wait for the evaluators to return `true` (in ms). Defaults to `5000`.
+
+### Usage
+```kdl
+wait_for { $ "div[role='dialog']" }
+$ "div[role='dialog'] button" { click }
+wait_for { $ "div[role='dialog']"; not }
+```
 
 ## `wait_until`
+Waits until the specified browser event fires.
+
+### Args
+- `event`: The event to wait for. Defaults to `load`.
+  - `load`
+  - `domcontentloaded`
+  - `networkIdle`
+  - `networkAlmostIdle`
+
+### Options
+- `timeout`: The maximum amount of time to wait for the provided event to fire (in ms). Defaults to `5000`.
+
+### Usage
+```kdl
+$ "#some-link" { click }
+wait_until
+```
 
 ## `keyboard.down`
 

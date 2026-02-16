@@ -145,7 +145,7 @@ export async function applyUAOverride(
 }
 
 export const ApplyIdentityOptionsSchema = ts.properties({
-  limit: ts.expression(ts.default(ts.number(), 10)),
+  limit: ts.expression(ts.default(ts.number(), 3)),
 });
 
 export const BaseApplyIdentitySchema = ts.node({
@@ -230,8 +230,6 @@ export class SetHardwareConcurrency implements IAction<SessionContext> {
 }
 
 export const SetViewportOptions = ts.properties({
-  width: ts.expression(ts.number()),
-  height: ts.expression(ts.number()),
   deviceScaleFactor: ts.expression(ts.default(ts.number(), 1)),
   mobile: ts.expression(ts.default(ts.boolean(), false)),
   screenWidth: ts.expression(ts.optional(ts.number())),
@@ -239,6 +237,7 @@ export const SetViewportOptions = ts.properties({
 });
 
 export const BaseSetViewportSchema = ts.node({
+  args: ts.args([ts.expression(ts.number()), ts.expression(ts.number())]),
   options: SetViewportOptions,
 });
 
@@ -253,8 +252,8 @@ export class SetViewport implements IAction<SessionContext> {
   constructor(private params_: SetViewportParams) {}
 
   async execute(ctx: SessionContext) {
-    const width = this.params_.options.width.resolve(ctx.$.expressionContext);
-    const height = this.params_.options.height.resolve(ctx.$.expressionContext);
+    const width = this.params_.args[0].resolve(ctx.$.expressionContext);
+    const height = this.params_.args[1].resolve(ctx.$.expressionContext);
     await ctx.session.send('Emulation.setDeviceMetricsOverride', {
       width,
       height,

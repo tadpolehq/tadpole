@@ -15,6 +15,7 @@
 - Add: not evaluator (logical not operator)
 - Add: or evaluator (logical or)
 - Add: prop evaluator (access object property)
+- Add: replace evaluator (replaces one or all of the matched pattern with another string)
 - Add: root evaluator (allows access to original input passed to sequence of evaluators)
 - Add: node and struct builders now have extend
 - Add: common regex type to schema

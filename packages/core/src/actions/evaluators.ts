@@ -79,24 +79,75 @@ export class And extends BaseBinaryOp {
   protected override op: string = '&&';
 }
 
-export const BaseAsBooleanSchema = ts.node({
-  properties: ts.properties({
-    inverted: ts.default(ts.boolean(), false),
+export const AsBoolOptionsSchema = ts.properties({
+  falsyValues: ts.expression(ts.default(ts.string(), 'false,0,no')),
+});
+
+export const BaseAsBoolSchema = ts.node({
+  options: AsBoolOptionsSchema,
+});
+
+export type AsBoolParams = ts.output<typeof BaseAsBoolSchema>;
+
+export const AsBoolParser = ts.into(
+  BaseAsBoolSchema,
+  (v): IEvaluator => new AsBool(v),
+);
+
+export class AsBool implements IEvaluator {
+  constructor(private params_: AsBoolParams) {}
+
+  toJS(input: string, ctx: EvaluatorContext): string {
+    const falsyValues = JSON.stringify(
+      this.params_.options.falsyValues
+        .resolve(ctx.expressionContext)
+        .split(',')
+        .map((v) => v.trim().toLowerCase()),
+    );
+    return `(() => {
+      const value = ${input};
+      if (!value) return false;
+      if (Array.isArray(value)) return value.length > 0;
+      if (typeof value === "string")
+        return !${falsyValues}.includes(value.trim().toLowerCase());
+
+      return true;
+    })()`;
+  }
+}
+
+export const BaseAsFloatSchema = ts.node({});
+
+export const AsFloatParser = ts.into(
+  BaseAsFloatSchema,
+  (): IEvaluator => new AsFloat(),
+);
+
+export class AsFloat implements IEvaluator {
+  toJS(input: string) {
+    return `parseFloat(${input}?.toString().replace(/[^0-9.-]/g, "") ?? NaN)`;
+  }
+}
+
+export const BaseAsIntSchema = ts.node({
+  options: ts.properties({
+    radix: ts.default(ts.number(), 10),
   }),
 });
 
-export type AsBooleanParams = ts.output<typeof BaseAsBooleanSchema>;
+export type AsIntParams = ts.output<typeof BaseAsIntSchema>;
 
-export const AsBooleanParser = ts.into(
-  BaseAsBooleanSchema,
-  (v): IEvaluator => new AsBoolean(v),
+export const AsIntParser = ts.into(
+  BaseAsIntSchema,
+  (v): IEvaluator => new AsInt(v),
 );
 
-export class AsBoolean implements IEvaluator {
-  constructor(private params_: AsBooleanParams) {}
+export class AsInt implements IEvaluator {
+  constructor(private params_: AsIntParams) {}
 
-  toJS(input: string): string {
-    return this.params_.properties.inverted ? `!(${input})` : `!!(${input})`;
+  toJS(input: string) {
+    const radix = this.params_.options.radix;
+    return `parseInt(${input}?.toString().replace(/[^0-9-]/g, "") ?? NaN, ${radix})`;
   }
 }
 
@@ -156,7 +207,7 @@ export class Default implements IEvaluator {
 
   toJS(input: string, ctx: EvaluatorContext) {
     const defaultValue = this.params_.args[0].resolve(ctx.expressionContext);
-    return `(${input}) ?? ${JSON.stringify(defaultValue)}`;
+    return `(${input}) || ${JSON.stringify(defaultValue)}`;
   }
 }
 
@@ -185,6 +236,7 @@ export const BaseExtractSchema = ts.node({
   args: ts.args([ts.expression(ts.regex)]),
   options: ts.properties({
     index: ts.default(ts.number(), 1),
+    caseSensitive: ts.default(ts.boolean(), true),
   }),
 });
 
@@ -201,7 +253,8 @@ export class Extract implements IEvaluator {
   toJS(input: string, ctx: EvaluatorContext) {
     const regex = this.params_.args[0].resolve(ctx.expressionContext);
     const index = this.params_.options.index;
-    return `${input}?.match(${JSON.stringify(regex)})?.[${index}]`;
+    const flags = this.params_.options.caseSensitive ? '' : 'i';
+    return `new RegExp(${JSON.stringify(regex)}, ${JSON.stringify(flags)}).exec(${input})?.[${index}]`;
   }
 }
 
@@ -242,6 +295,9 @@ export class InnerText implements IEvaluator {
 
 export const BaseMatchesSchema = ts.node({
   args: ts.args([ts.expression(ts.regex)]),
+  options: ts.properties({
+    caseSensitive: ts.default(ts.boolean(), true),
+  }),
 });
 
 export type MatchesParams = ts.output<typeof BaseMatchesSchema>;
@@ -256,7 +312,8 @@ export class Matches implements IEvaluator {
 
   toJS(input: string, ctx: EvaluatorContext) {
     const regex = this.params_.args[0].resolve(ctx.expressionContext);
-    return `new RegExp(${JSON.stringify(regex)}).test(${input})`;
+    const flags = this.params_.options.caseSensitive ? '' : 'i';
+    return `new RegExp(${JSON.stringify(regex)}, ${JSON.stringify(flags)}).test(${input})`;
   }
 }
 
@@ -307,7 +364,7 @@ export class Property implements IEvaluator {
 }
 
 export const BaseQuerySelectorSchema = ts.node({
-  args: ts.args([ts.string()]),
+  args: ts.args([ts.expression(ts.string())]),
 });
 
 export type QuerySelectorParams = ts.output<typeof BaseQuerySelectorSchema>;
@@ -320,9 +377,45 @@ export const QuerySelectorParser = ts.into(
 export class QuerySelector implements IEvaluator {
   constructor(private params_: QuerySelectorParams) {}
 
-  toJS(input: string): string {
-    const [selector] = this.params_.args;
+  toJS(input: string, ctx: EvaluatorContext): string {
+    const selector = this.params_.args[0].resolve(ctx.expressionContext);
     return `${input}?.querySelector("${selector}")`;
+  }
+}
+
+export const ReplaceOptionsSchema = ts.properties({
+  all: ts.default(ts.boolean(), false),
+  regex: ts.default(ts.boolean(), false),
+  caseSensitive: ts.default(ts.boolean(), true),
+});
+
+export const BaseReplaceSchema = ts.node({
+  args: ts.args([ts.expression(ts.regex), ts.expression(ts.string())]),
+  options: ReplaceOptionsSchema,
+});
+
+export type ReplaceParams = ts.output<typeof BaseReplaceSchema>;
+
+export class Replace implements IEvaluator {
+  constructor(private params_: ReplaceParams) {}
+
+  toJS(input: string, ctx: EvaluatorContext) {
+    let pattern = this.params_.args[0].resolve(ctx.expressionContext);
+    const replacement = JSON.stringify(
+      this.params_.args[1].resolve(ctx.expressionContext),
+    );
+    const method = this.params_.options.all ? 'replaceAll' : 'replace';
+
+    if (this.params_.options.regex) {
+      const flags = [];
+      if (!this.params_.options.caseSensitive) flags.push('i');
+      if (this.params_.options.all) flags.push('g');
+      pattern = `new RegExp(${JSON.stringify(pattern)}, ${JSON.stringify(flags.join(''))})`;
+    } else {
+      pattern = JSON.stringify(pattern);
+    }
+
+    return `${input}?.toString().${method}(${pattern}, ${replacement})`;
   }
 }
 
