@@ -95,7 +95,7 @@ export class Session {
   }
 
   private get activeNode_(): Node | null {
-    return this.nodeStack_.at(-1) ?? null;
+    return this.nodeStack_.at(-1) ?? this.documentNode_;
   }
 
   pushNode(node: Node) {

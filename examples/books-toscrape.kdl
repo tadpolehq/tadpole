@@ -1,0 +1,27 @@
+main {
+  new_page {
+    goto "https://books.toscrape.com/"
+    loop {
+      do {
+        $$ article.product_pod {
+          extract "books[]" {
+            title { $ "h3 a"; attr title }
+            rating {
+              $ ".star-rating";
+              attr "class";
+              extract "star-rating (One|Two|Three|Four|Five)" caseInsensitive=#true;
+              func "(v) => ({'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5}[v.toLowerCase()] || null)"
+            }
+            price { $ "p.price_color"; text; as_float }
+            in_stock { $ "p.availability"; text; matches "In stock" caseInsensitive=#true }
+          }
+        }
+      }
+      while { $ "li.next" }
+      next {
+        $ "li.next a" { click }
+        wait_until
+      }
+    }
+  }
+}

@@ -3,6 +3,6 @@ module stealth {
     apply_identity windows
     set_device_memory 16
     set_hardware_concurrency 8
-    set_viewport height=1350 width=2560 screenHeight=1440
+    set_viewport 2560 1350 screenHeight=1440
   }
 }

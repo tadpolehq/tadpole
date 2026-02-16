@@ -1,5 +1,6 @@
 import * as ts from '@tadpolehq/schema';
 import { writeFile } from 'node:fs/promises';
+import { Random as _Random } from 'random';
 import type { IAction } from './base.js';
 import type { BrowserContext, SessionContext } from '../context.js';
 import type { Page } from '../types/index.js';
@@ -30,6 +31,8 @@ export class Log implements IAction<BrowserContext> {
 }
 
 export const RandomOptions = ts.properties({
+  n: ts.expression(ts.default(ts.number(), 1)),
+  seed: ts.expression(ts.optional(ts.string())),
   weights: ts.into(
     ts.optional(ts.string().test((v) => /(\s*[0-9]+\s*,?)+(?<!,)/.test(v))),
     (v) => v?.split(',').map((v) => Number(v.trim())),
@@ -49,7 +52,7 @@ export type RandomParams<TCtx> = ts.output<
   ReturnType<typeof BaseRandomSchema<TCtx>>
 >;
 
-export function RandomParser<TCtx>(
+export function RandomParser<TCtx extends BrowserContext>(
   registry: ts.IRegistry<
     ts.Node,
     IAction<TCtx>,
@@ -62,34 +65,35 @@ export function RandomParser<TCtx>(
   );
 }
 
-export class Random<TCtx> implements IAction<TCtx> {
+export class Random<TCtx extends BrowserContext> implements IAction<TCtx> {
   constructor(private params_: RandomParams<TCtx>) {}
 
   async execute(ctx: TCtx) {
-    let action: IAction<TCtx>;
+    const n = this.params_.options.n.resolve(ctx.$.expressionContext);
+    const seed = this.params_.options.seed.resolve(ctx.$.expressionContext);
+    const generator = new _Random(seed);
     if (this.params_.options.weights) {
       const weights = [this.params_.options.weights[0] || 1];
       for (let i = 1; i < this.params_.execute.length; i++) {
         weights[i] = (this.params_.options.weights[i] || 1) + weights[i - 1]!;
       }
 
-      const random = Math.random() * weights.at(-1)!;
-      let i;
-      for (i = 0; i < weights.length; i++) {
-        if (weights[i]! > random) {
-          break;
+      for (let i = 0; i < n; i++) {
+        const random = generator.float() * weights.at(-1)!;
+        for (let j = 0; j < weights.length; j++) {
+          if (weights[j]! > random) {
+            await this.params_.execute[j]!.execute(ctx);
+            break;
+          }
         }
       }
-
-      action = this.params_.execute[i]!;
     } else {
-      action =
-        this.params_.execute[
-          Math.floor(Math.random() * this.params_.execute.length)
-        ]!;
+      for (let i = 0; i < n; i++) {
+        await this.params_.execute[
+          Math.floor(generator.float() * this.params_.execute.length)
+        ]!.execute(ctx);
+      }
     }
-
-    await action.execute(ctx);
   }
 }
 
@@ -176,10 +180,8 @@ export class Sleep implements IAction<BrowserContext> {
   constructor(private params_: SleepParams) {}
 
   async execute(ctx: BrowserContext) {
-    const [time] = this.params_.args;
+    const time = this.params_.args[0].resolve(ctx.$.expressionContext);
     ctx.$.log.debug(`Sleeping for ${time}ms`);
-    await new Promise((resolve) =>
-      setTimeout(resolve, time.resolve(ctx.$.expressionContext)),
-    );
+    await new Promise((resolve) => setTimeout(resolve, time));
   }
 }

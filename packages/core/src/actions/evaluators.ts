@@ -254,7 +254,7 @@ export class Extract implements IEvaluator {
     const regex = this.params_.args[0].resolve(ctx.expressionContext);
     const index = this.params_.options.index;
     const flags = this.params_.options.caseSensitive ? '' : 'i';
-    return `(new RegExp(${JSON.stringify(regex)}, ${JSON.stringify(flags)}).exec(${input})?.[${index}]`;
+    return `new RegExp(${JSON.stringify(regex)}, ${JSON.stringify(flags)}).exec(${input})?.[${index}]`;
   }
 }
 

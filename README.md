@@ -43,6 +43,7 @@ The long term vision and goal I have for this project is to create a new standar
 - **Plugins**: Allow dynamic extension of the language runtime.
 - **Root Slots**: Support for top level dynamic placeholders
 - **Static HTML Parser**: Add faster, static site parsing without a browser
+- **`launch` Action**: Create an action to specifically launch Chrome
 
 **Beyond**
 - **Outputs**: Complex output sinks to databases, s3, kafka, etc.

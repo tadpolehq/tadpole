@@ -81,6 +81,24 @@ $ "#submit-button" {
 }
 ```
 
+## `do`
+Executes the children nodes. Can be conditional by providing `if` and can be repeated by providing `n`.
+
+### Options
+- `if`: The execution condition. Can be an expression. Defaults to `undefined`.
+- `n`: The number of times to execute the body. Defaults to `1`.
+
+### Usage
+```kdl
+do if="=env('CHECK_SOMETHING')" {
+  ...
+}
+
+do n=3 {
+  ...
+}
+```
+
 ## `extract`
 Extracts data from the current element context into a structured record (JSON).
 Each child node of extract defines a key in the resulting object and the evaluator(s) used to fetch its value.
@@ -159,7 +177,9 @@ Navigates the current browser tab to a specified URL.
 - `timeout`: The timeout (in ms) for the `wait_until` event to fire. Defaults to `5000`. Can be a static number or expression.
 
 ## `loop`
-Executes the actions in the `do` child node while the evaluators in the `if` child node return a truthy value.
+Executes the actions in the `do` and `next` child nodes while the evaluators in the `if` child node return a truthy value.
+
+The actions in `do` are executed before the check and the actions in `next` are executed only if the check returns a truthy value.
 
 ### Options
 - `some`: If the active node is a collection, return true if at least one element meets the predicate.
@@ -167,12 +187,17 @@ Executes the actions in the `do` child node while the evaluators in the `if` chi
 ### Usage
 ```kdl
 loop {
+  do {
+    extract "data[]" {
+      ...
+    }
+  }
   while {
     $ "#pagination-next"; prop disabled; as_boolean; not
   }
-  do {
+  next {
     $ "#pagination-next" { click }
-    ...
+    wait_until
   }
 }
 ```

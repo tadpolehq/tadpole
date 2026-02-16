@@ -2209,6 +2209,7 @@ __metadata:
     bezier-js: "npm:^6.1.4"
     eslint: "npm:^9.39.1"
     expr-eval: "npm:^2.0.2"
+    random: "npm:^5.4.1"
     tsdown: "npm:^0.20.1"
     tslib: "npm:^2.3.0"
     typescript: "npm:^5.9.3"
@@ -6995,6 +6996,13 @@ __metadata:
   version: 1.1.2
   resolution: "radix3@npm:1.1.2"
   checksum: 10c0/d4a295547f71af079868d2c2ed3814a9296ee026c5488212d58c106e6b4797c6eaec1259b46c9728913622f2240c9a944bfc8e2b3b5f6e4a5045338b1609f1e4
+  languageName: node
+  linkType: hard
+
+"random@npm:^5.4.1":
+  version: 5.4.1
+  resolution: "random@npm:5.4.1"
+  checksum: 10c0/ef02b9153f2ae6188c40150acb21794a3987bbe596ac69415320ca9f263d0a0c8f507a6a0518ec1eeeeea0275dfa7761bcdec71fb38067b5e4f1e256a5d43b15
   languageName: node
   linkType: hard
 
