@@ -1,6 +1,6 @@
 {
   "name": "@tadpolehq/cli",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Command line interface for managing Tadpole projects",
   "homepage": "https://tadpolehq.com",
   "repository": {
