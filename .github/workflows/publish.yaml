@@ -9,7 +9,6 @@ on:
     - packages/core/**
     - packages/schema/**
     - packages/utils/**
-    - .changeset/**
     - .github/workflows/publish.yaml
 
 jobs:
