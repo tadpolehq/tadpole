@@ -1,8 +1,8 @@
 import * as ts from '@tadpolehq/schema';
 import axios from 'axios';
-import type { IAction } from './base.js';
-import type { SessionContext } from '../context.js';
-import type { Emulation } from '../types/index.js';
+import type { IAction } from '@/actions/base.js';
+import * as cdp from '@/cdp/index.js';
+import type { Context } from './base.js';
 
 export interface ChromeRelease {
   milestone: number;
@@ -42,7 +42,7 @@ export async function generateIdentityFor(
   forPlatform: Platform,
   limit: number,
 ): Promise<
-  [string, string, Emulation.UserAgentMetadata & Record<string, any>]
+  [string, string, cdp.types.Emulation.UserAgentMetadata & Record<string, any>]
 > {
   let lookupPlatform: string,
     platform: string,
@@ -117,10 +117,11 @@ export async function generateIdentityFor(
 }
 
 export async function applyUAOverride(
-  ctx: SessionContext,
+  ctx: Context,
   userAgent: string,
   platform: string,
-  userAgentMetadata: Emulation.UserAgentMetadata & Record<string, any>,
+  userAgentMetadata: cdp.types.Emulation.UserAgentMetadata &
+    Record<string, any>,
 ) {
   await ctx.session.send('Network.setUserAgentOverride', {
     userAgent,
@@ -157,13 +158,13 @@ export type ApplyIdentityParams = ts.output<typeof BaseApplyIdentitySchema>;
 
 export const ApplyIdentityParser = ts.into(
   BaseApplyIdentitySchema,
-  (v): IAction<SessionContext> => new ApplyIdentity(v),
+  (v): IAction<Context> => new ApplyIdentity(v),
 );
 
-export class ApplyIdentity implements IAction<SessionContext> {
+export class ApplyIdentity implements IAction<Context> {
   constructor(private params_: ApplyIdentityParams) {}
 
-  async execute(ctx: SessionContext) {
+  async execute(ctx: Context) {
     const [userAgent, platform, userAgentMetadata] = await generateIdentityFor(
       this.params_.args[0].resolve(ctx.$.expressionContext),
       this.params_.options.limit.resolve(ctx.$.expressionContext),
@@ -180,13 +181,13 @@ export type SetDeviceMemoryParams = ts.output<typeof BaseSetDeviceMemorySchema>;
 
 export const SetDeviceMemoryParser = ts.into(
   BaseSetDeviceMemorySchema,
-  (v): IAction<SessionContext> => new SetDeviceMemory(v),
+  (v): IAction<Context> => new SetDeviceMemory(v),
 );
 
-export class SetDeviceMemory implements IAction<SessionContext> {
+export class SetDeviceMemory implements IAction<Context> {
   constructor(private params_: SetDeviceMemoryParams) {}
 
-  async execute(ctx: SessionContext) {
+  async execute(ctx: Context) {
     const deviceMemory = this.params_.args[0].resolve(ctx.$.expressionContext);
     await ctx.session.send('Page.addScriptToEvaluateOnNewDocument', {
       source: `
@@ -213,13 +214,13 @@ export type SetHardwareConcurrencyParams = ts.output<
 
 export const SetHardwareConcurrencyParser = ts.into(
   BaseSetHardwareConcurrencySchema,
-  (v): IAction<SessionContext> => new SetHardwareConcurrency(v),
+  (v): IAction<Context> => new SetHardwareConcurrency(v),
 );
 
-export class SetHardwareConcurrency implements IAction<SessionContext> {
+export class SetHardwareConcurrency implements IAction<Context> {
   constructor(private params_: SetHardwareConcurrencyParams) {}
 
-  async execute(ctx: SessionContext) {
+  async execute(ctx: Context) {
     const hardwareConcurrency = this.params_.args[0].resolve(
       ctx.$.expressionContext,
     );
@@ -245,13 +246,13 @@ export type SetViewportParams = ts.output<typeof BaseSetViewportSchema>;
 
 export const SetViewportParser = ts.into(
   BaseSetViewportSchema,
-  (v): IAction<SessionContext> => new SetViewport(v),
+  (v): IAction<Context> => new SetViewport(v),
 );
 
-export class SetViewport implements IAction<SessionContext> {
+export class SetViewport implements IAction<Context> {
   constructor(private params_: SetViewportParams) {}
 
-  async execute(ctx: SessionContext) {
+  async execute(ctx: Context) {
     const width = this.params_.args[0].resolve(ctx.$.expressionContext);
     const height = this.params_.args[1].resolve(ctx.$.expressionContext);
     await ctx.session.send('Emulation.setDeviceMetricsOverride', {
@@ -279,13 +280,13 @@ export type SetWebGLVendorParams = ts.output<typeof BaseSetWebGLVendorSchema>;
 
 export const SetWebGLVendorParser = ts.into(
   BaseSetWebGLVendorSchema,
-  (v): IAction<SessionContext> => new SetWebGLVendor(v),
+  (v): IAction<Context> => new SetWebGLVendor(v),
 );
 
-export class SetWebGLVendor implements IAction<SessionContext> {
+export class SetWebGLVendor implements IAction<Context> {
   constructor(private params_: SetWebGLVendorParams) {}
 
-  async execute(ctx: SessionContext) {
+  async execute(ctx: Context) {
     const vendor = this.params_.args[0].resolve(ctx.$.expressionContext);
     const renderer = this.params_.args[1].resolve(ctx.$.expressionContext);
     await ctx.session.send('Page.addScriptToEvaluateOnNewDocument', {

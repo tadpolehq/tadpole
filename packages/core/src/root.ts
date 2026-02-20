@@ -1,16 +1,6 @@
 import * as ts from '@tadpolehq/schema';
-import {
-  BrowserActionRegistry,
-  EvaluatorRegistry,
-  SessionActionRegistry,
-  type IAction,
-  type IEvaluator,
-} from './actions/index.js';
-import type {
-  BrowserContext,
-  EvaluatorContext,
-  SessionContext,
-} from './context.js';
+import * as actions from './actions/index.js';
+import * as evaluators from './evaluators/index.js';
 import { DefSchema } from './def.js';
 
 export const ValueTypeSchema = ts.expression(
@@ -28,9 +18,9 @@ export type ActionParams<TOut> = ts.output<
 >;
 
 export class ActionWrapper<
-  TCtx extends BrowserContext,
-  TOut extends IAction<TCtx>,
-> implements IAction<TCtx> {
+  TCtx extends actions.root.WithContext,
+  TOut extends actions.IAction<TCtx>,
+> implements actions.IAction<TCtx> {
   constructor(private params_: ActionParams<TOut>) {}
 
   async execute(ctx: TCtx) {
@@ -53,10 +43,10 @@ export class ActionWrapper<
 
 export const BaseEvaluatorSchema = ts.node({});
 
-export class EvaluatorWrapper implements IEvaluator {
-  constructor(private evaluators_: IEvaluator[]) {}
+export class EvaluatorWrapper implements evaluators.IEvaluator {
+  constructor(private evaluators_: evaluators.IEvaluator[]) {}
 
-  toJS(input: string, ctx: EvaluatorContext): string {
+  toJS(input: string, ctx: evaluators.Context): string {
     let result = input;
     for (const evaluator of this.evaluators_) {
       result = evaluator.toJS(result, ctx);
@@ -81,30 +71,32 @@ const layout = new Map<string, ts.IMetaType<ts.Node>>([
             'evaluator',
             ts.meta.register(
               ts.into(
-                ts.children(ts.anyOf(EvaluatorRegistry)),
-                (v): IEvaluator => new EvaluatorWrapper(v),
+                ts.children(ts.anyOf(evaluators.Registry)),
+                (v): evaluators.IEvaluator => new EvaluatorWrapper(v),
               ),
-              EvaluatorRegistry,
+              evaluators.Registry,
             ),
           ],
           [
             'action',
             ts.meta.register(
               ts.into(
-                createActionSchema(SessionActionRegistry),
-                (v): IAction<SessionContext> => new ActionWrapper(v),
+                createActionSchema(actions.cdp.session.Registry),
+                (v): actions.IAction<actions.cdp.session.Context> =>
+                  new ActionWrapper(v),
               ),
-              SessionActionRegistry,
+              actions.cdp.session.Registry,
             ),
           ],
           [
             'browser_action',
             ts.meta.register(
               ts.into(
-                createActionSchema(BrowserActionRegistry),
-                (v): IAction<BrowserContext> => new ActionWrapper(v),
+                createActionSchema(actions.cdp.browser.Registry),
+                (v): actions.IAction<actions.cdp.browser.Context> =>
+                  new ActionWrapper(v),
               ),
-              BrowserActionRegistry,
+              actions.cdp.browser.Registry,
             ),
           ],
         ]),

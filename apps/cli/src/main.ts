@@ -85,8 +85,7 @@ async function launchChrome(
       '--use-angle=swiftshader',
       '--enable-unsafe-swiftshader',
     );
-  if (proxyServer)
-    args.push(`--proxy-server=${proxyServer}`, '--use-angle=default');
+  if (proxyServer) args.push(`--proxy-server=${proxyServer}`);
 
   const child = await spawnAsync(
     chromePath,

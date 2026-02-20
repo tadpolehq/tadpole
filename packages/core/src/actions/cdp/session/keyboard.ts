@@ -1,6 +1,6 @@
 import * as ts from '@tadpolehq/schema';
-import type { IAction } from './base.js';
-import type { SessionContext } from '../context.js';
+import type { IAction } from '@/actions/base.js';
+import type { Context } from './base.js';
 
 export type KeyDefinition = {
   key: string;
@@ -169,22 +169,22 @@ export const ModifierSchema = ts.into(
 // TODO: Get this to use a string union
 export const KeySchema = ts.enum(Object.keys(keyDefinitions));
 
-export const BaseKeyboardDownSchema = ts.node({
+export const DownSchema = ts.node({
   args: ts.args([ts.expression(KeySchema)]),
   modifiers: ModifierSchema,
 });
 
-export type KeyboardDownParams = ts.output<typeof BaseKeyboardDownSchema>;
+export type DownParams = ts.output<typeof DownSchema>;
 
-export const KeyboardDownParser = ts.into(
-  BaseKeyboardDownSchema,
-  (v): IAction<SessionContext> => new KeyboardDown(v),
+export const DownParser = ts.into(
+  DownSchema,
+  (v): IAction<Context> => new Down(v),
 );
 
-export class KeyboardDown implements IAction<SessionContext> {
-  constructor(private params_: KeyboardDownParams) {}
+export class Down implements IAction<Context> {
+  constructor(private params_: DownParams) {}
 
-  async execute(ctx: SessionContext) {
+  async execute(ctx: Context) {
     const keyDefinition = getKeyDefinition(
       this.params_.args[0].resolve(ctx.$.expressionContext),
       this.params_.modifiers,
@@ -210,22 +210,19 @@ export class KeyboardDown implements IAction<SessionContext> {
   }
 }
 
-export const BaseKeyboardUpSchema = ts.node({
+export const UpSchema = ts.node({
   args: ts.args([ts.expression(KeySchema)]),
   modifiers: ModifierSchema,
 });
 
-export type KeyboardUpParams = ts.output<typeof BaseKeyboardUpSchema>;
+export type UpParams = ts.output<typeof UpSchema>;
 
-export const KeyboardUpParser = ts.into(
-  BaseKeyboardUpSchema,
-  (v): IAction<SessionContext> => new KeyboardUp(v),
-);
+export const UpParser = ts.into(UpSchema, (v): IAction<Context> => new Up(v));
 
-export class KeyboardUp implements IAction<SessionContext> {
-  constructor(private params_: KeyboardUpParams) {}
+export class Up implements IAction<Context> {
+  constructor(private params_: UpParams) {}
 
-  async execute(ctx: SessionContext) {
+  async execute(ctx: Context) {
     const keyDefinition = getKeyDefinition(
       this.params_.args[0].resolve(ctx.$.expressionContext),
       this.params_.modifiers,
@@ -239,42 +236,42 @@ export class KeyboardUp implements IAction<SessionContext> {
   }
 }
 
-export const KeyboardPressOptions = ts.properties({
+export const PressOptions = ts.properties({
   delay: ts.expression(ts.default(ts.number(), 0)),
 });
 
-export const BaseKeyboardPressSchema = ts.node({
+export const PressSchema = ts.node({
   args: ts.args([ts.expression(KeySchema)]),
   modifiers: ModifierSchema,
-  options: KeyboardPressOptions,
+  options: PressOptions,
 });
 
-export type KeyboardPressParams = ts.output<typeof BaseKeyboardPressSchema>;
+export type PressParams = ts.output<typeof PressSchema>;
 
-export const KeyboardPressParser = ts.into(
-  BaseKeyboardPressSchema,
-  (v): IAction<SessionContext> => new KeyboardPress(v),
+export const PressParser = ts.into(
+  PressSchema,
+  (v): IAction<Context> => new Press(v),
 );
 
-export class KeyboardPress implements IAction<SessionContext> {
-  private keyboardDown_: KeyboardDown;
-  private keyboardUp_: KeyboardUp;
+export class Press implements IAction<Context> {
+  private down_: Down;
+  private up_: Up;
 
-  constructor(private params_: KeyboardPressParams) {
+  constructor(private params_: PressParams) {
     const [key] = this.params_.args;
-    this.keyboardDown_ = new KeyboardDown({
+    this.down_ = new Down({
       args: [key],
       modifiers: this.params_.modifiers,
     });
-    this.keyboardUp_ = new KeyboardUp({
+    this.up_ = new Up({
       args: [key],
       modifiers: this.params_.modifiers,
     });
   }
 
-  async execute(ctx: SessionContext) {
+  async execute(ctx: Context) {
     ctx.$.log.debug(`Pressing character: ${this.params_.args[0]}`);
-    await this.keyboardDown_.execute(ctx);
+    await this.down_.execute(ctx);
     const delay = Math.max(
       0,
       this.params_.options.delay.resolve(ctx.$.expressionContext),
@@ -282,37 +279,37 @@ export class KeyboardPress implements IAction<SessionContext> {
     if (delay) {
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
-    await this.keyboardUp_.execute(ctx);
+    await this.up_.execute(ctx);
   }
 }
 
-export const KeyboardTypeOptionsSchema = ts.properties({
+export const TypeOptionsSchema = ts.properties({
   delay: ts.expression(ts.default(ts.number(), 0)),
 });
 
-export const BaseKeyboardTypeSchema = ts.node({
+export const TypeSchema = ts.node({
   args: ts.args([ts.expression(ts.string())]),
-  options: KeyboardTypeOptionsSchema,
+  options: TypeOptionsSchema,
 });
 
-export type KeyboardTypeParams = ts.output<typeof BaseKeyboardTypeSchema>;
+export type TypeParams = ts.output<typeof TypeSchema>;
 
-export const KeyboardTypeParser = ts.into(
-  BaseKeyboardTypeSchema,
-  (v): IAction<SessionContext> => new KeyboardType(v),
+export const TypeParser = ts.into(
+  TypeSchema,
+  (v): IAction<Context> => new Type(v),
 );
 
-export class KeyboardType implements IAction<SessionContext> {
-  constructor(private params_: KeyboardTypeParams) {}
+export class Type implements IAction<Context> {
+  constructor(private params_: TypeParams) {}
 
-  async execute(ctx: SessionContext) {
+  async execute(ctx: Context) {
     const [text] = this.params_.args;
     const presses = text
       .resolve(ctx.$.expressionContext)
       .split('')
       .map(
         (ch) =>
-          new KeyboardPress({
+          new Press({
             args: [new ts.ResolvedExpression(ch)],
             modifiers: 0,
             options: {
@@ -326,13 +323,13 @@ export class KeyboardType implements IAction<SessionContext> {
   }
 }
 
-export const KeyboardRegistry: ts.Registry<
+export const Registry: ts.Registry<
   ts.Node,
-  IAction<SessionContext>,
-  ts.Type<ts.Node, IAction<SessionContext>>
+  IAction<Context>,
+  ts.Type<ts.Node, IAction<Context>>
 > = new ts.Registry();
 
-KeyboardRegistry.register('down', KeyboardDownParser)
-  .register('press', KeyboardPressParser)
-  .register('type', KeyboardTypeParser)
-  .register('up', KeyboardUpParser);
+Registry.register('down', DownParser)
+  .register('press', PressParser)
+  .register('type', TypeParser)
+  .register('up', UpParser);

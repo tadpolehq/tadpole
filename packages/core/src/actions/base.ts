@@ -1,15 +1,3 @@
-import {
-  Registry,
-  type IRegistry,
-  type Node,
-  type Type,
-} from '@tadpolehq/schema';
-import type {
-  BrowserContext,
-  EvaluatorContext,
-  SessionContext,
-} from '../context.js';
-
 /**
  * Interface for actions.
  */
@@ -20,23 +8,3 @@ export interface IAction<TCtx> {
    */
   execute(ctx: TCtx): Promise<void>;
 }
-
-export interface IEvaluator {
-  toJS(input: string, ctx: EvaluatorContext): string;
-}
-
-export const BrowserActionRegistry: IRegistry<
-  Node,
-  IAction<BrowserContext>,
-  Type<Node, IAction<BrowserContext>>
-> = new Registry();
-export const SessionActionRegistry: IRegistry<
-  Node,
-  IAction<SessionContext>,
-  Type<Node, IAction<SessionContext>>
-> = new Registry({ parent: BrowserActionRegistry });
-export const EvaluatorRegistry: IRegistry<
-  Node,
-  IEvaluator,
-  Type<Node, IEvaluator>
-> = new Registry();

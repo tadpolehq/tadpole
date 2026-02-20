@@ -1,0 +1,14 @@
+main {
+  browser {
+    options {
+      common
+      production {
+        headless;
+        stealth
+      }
+    }
+    run {
+
+    }
+  }
+}

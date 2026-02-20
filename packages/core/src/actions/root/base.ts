@@ -1,21 +1,20 @@
-import type { ExpressionContext } from '@tadpolehq/schema';
-import type { Browser } from './browser.js';
-import type { ILogger } from './logger.js';
-import type { Session } from './session.js';
-import type { Output, Value } from './values.js';
+import * as ts from '@tadpolehq/schema';
+import type { IAction } from '@/actions/base.js';
+import type { ILogger } from '@/logger.js';
+import type { Output, Value } from '@/values.js';
 
-export type RootContextParams = {
+export type ContextParams = {
   log: ILogger;
   output: Output;
-  expressionContext: ExpressionContext;
+  expressionContext: ts.ExpressionContext;
 };
 
-export class RootContext {
+export class Context {
   private log_: ILogger;
   private output_: Output;
-  private expressionContext_: ExpressionContext;
+  private expressionContext_: ts.ExpressionContext;
 
-  constructor({ log, output, expressionContext }: RootContextParams) {
+  constructor({ log, output, expressionContext }: ContextParams) {
     this.log_ = log;
     this.output_ = output;
     this.expressionContext_ = expressionContext;
@@ -29,7 +28,7 @@ export class RootContext {
     return this.output_;
   }
 
-  get expressionContext(): ExpressionContext {
+  get expressionContext(): ts.ExpressionContext {
     return this.expressionContext_;
   }
 
@@ -84,16 +83,12 @@ export class RootContext {
   }
 }
 
-export interface BrowserContext {
-  $: RootContext;
-  browser: Browser;
+export interface WithContext {
+  $: Context;
 }
 
-export interface SessionContext extends BrowserContext {
-  session: Session;
-}
-
-export interface EvaluatorContext {
-  rootInput: string;
-  expressionContext: ExpressionContext;
-}
+export const Registry: ts.IRegistry<
+  ts.Node,
+  IAction<WithContext>,
+  ts.Type<ts.Node, IAction<WithContext>>
+> = new ts.Registry();

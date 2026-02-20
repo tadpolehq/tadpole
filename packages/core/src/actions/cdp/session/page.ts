@@ -1,7 +1,7 @@
 import * as ts from '@tadpolehq/schema';
-import { type IAction } from './base.js';
-import type { SessionContext } from '../context.js';
-import type { Page } from '../types/index.js';
+import { type IAction } from '@/actions/base.js';
+import * as cdp from '@/cdp/index.js';
+import type { Context } from './base.js';
 
 export const TransitionTypeSchema = ts.enum([
   'link',
@@ -44,7 +44,7 @@ export const WaitUntilEventSchema = ts.enum([
 export type WaitUntilEvent = ts.output<typeof WaitUntilEventSchema>;
 
 async function waitUntil(
-  ctx: SessionContext,
+  ctx: Context,
   waitUntil: WaitUntilEvent,
   timeout: number,
 ) {
@@ -59,7 +59,7 @@ async function waitUntil(
     }
     case 'networkAlmostIdle':
     case 'networkIdle': {
-      await ctx.session.waitFor<Page.LifecycleEvent>(
+      await ctx.session.waitFor<cdp.types.Page.LifecycleEvent>(
         'Page.lifecycleEvent',
         timeout,
         (e) =>
@@ -89,13 +89,13 @@ export type GotoParams = ts.output<typeof BaseGotoSchema>;
 
 export const GotoParser = ts.into(
   BaseGotoSchema,
-  (v): IAction<SessionContext> => new Goto(v),
+  (v): IAction<Context> => new Goto(v),
 );
 
-export class Goto implements IAction<SessionContext> {
+export class Goto implements IAction<Context> {
   constructor(private params_: GotoParams) {}
 
-  async execute(ctx: SessionContext) {
+  async execute(ctx: Context) {
     const url = this.params_.args[0].resolve(ctx.$.expressionContext);
     const pageNavigateParams = {
       url,
@@ -136,13 +136,13 @@ export type WaitUntilParams = ts.output<typeof BaseWaitUntilSchema>;
 
 export const WaitUntilParser = ts.into(
   BaseWaitUntilSchema,
-  (v): IAction<SessionContext> => new WaitUntil(v),
+  (v): IAction<Context> => new WaitUntil(v),
 );
 
-export class WaitUntil implements IAction<SessionContext> {
+export class WaitUntil implements IAction<Context> {
   constructor(private params_: WaitUntilParams) {}
 
-  async execute(ctx: SessionContext) {
+  async execute(ctx: Context) {
     const [waitUntilOpt] = this.params_.args;
     await waitUntil(
       ctx,

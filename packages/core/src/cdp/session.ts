@@ -1,8 +1,8 @@
 import type { Browser } from './browser.js';
-import { ILogger } from './logger.js';
+import { ILogger } from '@/logger.js';
+import type { Value } from '@/values.js';
 import { Node } from './node.js';
 import type { Runtime } from './types/index.js';
-import type { Value } from './values.js';
 
 export interface SessionParams {
   id: string;

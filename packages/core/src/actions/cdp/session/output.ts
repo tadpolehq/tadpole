@@ -1,33 +1,31 @@
 import * as ts from '@tadpolehq/schema';
-import { EvaluatorRegistry, type IAction } from './base.js';
-import type { SessionContext } from '../context.js';
-import { reduceEvaluators } from '../utils.js';
+import type { IAction } from '@/actions/base.js';
+import * as evaluators from '@/evaluators/index.js';
+import type { Context } from './base.js';
 
-export const BaseExtractSchema = ts.node({
+export const ExtractSchema = ts.node({
   args: ts.args([ts.expression(ts.string())]),
   fields: ts.slot(
-    ts.childrenRecord(
-      ts.node({ evaluators: ts.children(ts.anyOf(EvaluatorRegistry)) }),
-    ),
+    ts.childrenRecord(ts.children(ts.anyOf(evaluators.Registry))),
   ),
 });
 
-export type ExtractParams = ts.output<typeof BaseExtractSchema>;
+export type ExtractParams = ts.output<typeof ExtractSchema>;
 
 export const ExtractParser = ts.into(
-  BaseExtractSchema,
-  (v): IAction<SessionContext> => new Extract(v),
+  ExtractSchema,
+  (v): IAction<Context> => new Extract(v),
 );
 
-export class Extract implements IAction<SessionContext> {
+export class Extract implements IAction<Context> {
   constructor(private params_: ExtractParams) {}
 
-  async execute(ctx: SessionContext) {
+  async execute(ctx: Context) {
     const activeNode = await ctx.session.activeNode();
     const extractMap = Array.from(this.params_.fields.entries())
       .map(
-        ([key, { evaluators }]) =>
-          `${key}: ${reduceEvaluators(evaluators, { rootInput: 'e', expressionContext: ctx.$.expressionContext })}`,
+        ([key, val]) =>
+          `${key}: ${evaluators.reduce(val, { rootInput: 'e', expressionContext: ctx.$.expressionContext })}`,
       )
       .join(',');
     const functionBody = activeNode.isCollection

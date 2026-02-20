@@ -1,23 +1,23 @@
 import { Bezier } from 'bezier-js';
 import * as ts from '@tadpolehq/schema';
-import type { IAction } from './base.js';
-import type { SessionContext } from '../context.js';
+import type { IAction } from '@/actions/base.js';
+import type { Context } from './base.js';
 
-export const BaseMouseMoveSchema = ts.node({
+export const MoveSchema = ts.node({
   args: ts.args([ts.expression(ts.number()), ts.expression(ts.number())]),
 });
 
-export type MouseMoveParams = ts.output<typeof BaseMouseMoveSchema>;
+export type MoveParams = ts.output<typeof MoveSchema>;
 
-export const MouseMoveParser = ts.into(
-  BaseMouseMoveSchema,
-  (v): IAction<SessionContext> => new MouseMove(v),
+export const MoveParser = ts.into(
+  MoveSchema,
+  (v): IAction<Context> => new Move(v),
 );
 
-export class MouseMove implements IAction<SessionContext> {
-  constructor(private params_: MouseMoveParams) {}
+export class Move implements IAction<Context> {
+  constructor(private params_: MoveParams) {}
 
-  async execute(ctx: SessionContext) {
+  async execute(ctx: Context) {
     const [x, y] = this.params_.args;
     const resolvedX = x.resolve(ctx.$.expressionContext);
     const resolvedY = y.resolve(ctx.$.expressionContext);
@@ -30,7 +30,7 @@ export class MouseMove implements IAction<SessionContext> {
   }
 }
 
-export const MouseNaturalMoveOptionsSchema = ts.properties({
+export const NaturalMoveOptionsSchema = ts.properties({
   curviness: ts.expression(ts.default(ts.number(), 0.5)),
   delay: ts.expression(ts.default(ts.number(), 0)),
   stepPrecision: ts.expression(ts.default(ts.number(), 20)),
@@ -38,24 +38,22 @@ export const MouseNaturalMoveOptionsSchema = ts.properties({
   maxSteps: ts.expression(ts.default(ts.number(), 100)),
 });
 
-export const BaseMouseNaturalMoveSchema = ts.node({
+export const NaturalMoveSchema = ts.node({
   args: ts.args([ts.expression(ts.number()), ts.expression(ts.number())]),
-  options: MouseNaturalMoveOptionsSchema,
+  options: NaturalMoveOptionsSchema,
 });
 
-export type MouseNaturalMoveParams = ts.output<
-  typeof BaseMouseNaturalMoveSchema
->;
+export type NaturalMoveParams = ts.output<typeof NaturalMoveSchema>;
 
-export const MouseNaturalMoveParser = ts.into(
-  BaseMouseNaturalMoveSchema,
-  (v): IAction<SessionContext> => new MouseNaturalMove(v),
+export const NaturalMoveParser = ts.into(
+  NaturalMoveSchema,
+  (v): IAction<Context> => new NaturalMove(v),
 );
 
-export class MouseNaturalMove implements IAction<SessionContext> {
-  constructor(private params_: MouseNaturalMoveParams) {}
+export class NaturalMove implements IAction<Context> {
+  constructor(private params_: NaturalMoveParams) {}
 
-  async execute(ctx: SessionContext): Promise<void> {
+  async execute(ctx: Context): Promise<void> {
     const moves = this.generateMoves(ctx);
     for (const move of moves) {
       await move.execute(ctx);
@@ -69,7 +67,7 @@ export class MouseNaturalMove implements IAction<SessionContext> {
     }
   }
 
-  generateMoves(ctx: SessionContext): MouseMove[] {
+  generateMoves(ctx: Context): Move[] {
     const start = ctx.session.mousePosition;
     const [x, y] = this.params_.args;
     const resolvedX = x.resolve(ctx.$.expressionContext);
@@ -118,7 +116,7 @@ export class MouseNaturalMove implements IAction<SessionContext> {
     const points = curve.getLUT(steps);
     return points.map(
       (point) =>
-        new MouseMove({
+        new Move({
           args: [
             new ts.ResolvedExpression(Math.max(0, Math.round(point.x))),
             new ts.ResolvedExpression(Math.max(0, Math.round(point.y))),
@@ -128,21 +126,21 @@ export class MouseNaturalMove implements IAction<SessionContext> {
   }
 }
 
-export const BaseMouseScrollSchema = ts.node({
+export const ScrollSchema = ts.node({
   args: ts.args([ts.expression(ts.number()), ts.expression(ts.number())]),
 });
 
-export type MouseScrollParams = ts.output<typeof BaseMouseScrollSchema>;
+export type ScrollParams = ts.output<typeof ScrollSchema>;
 
-export const MouseScrollParser = ts.into(
-  BaseMouseScrollSchema,
-  (v): IAction<SessionContext> => new MouseScroll(v),
+export const ScrollParser = ts.into(
+  ScrollSchema,
+  (v): IAction<Context> => new Scroll(v),
 );
 
-export class MouseScroll implements IAction<SessionContext> {
-  constructor(private params_: MouseScrollParams) {}
+export class Scroll implements IAction<Context> {
+  constructor(private params_: ScrollParams) {}
 
-  async execute(ctx: SessionContext) {
+  async execute(ctx: Context) {
     const [deltaX, deltaY] = this.params_.args;
     await ctx.session.send('Input.dispatchMouseEvent', {
       type: 'mouseWheel',
@@ -154,31 +152,29 @@ export class MouseScroll implements IAction<SessionContext> {
   }
 }
 
-export const MouseNaturalScrollOptionsSchema = ts.properties({
+export const NaturalScrollOptionsSchema = ts.properties({
   delay: ts.expression(ts.default(ts.number(), 0)),
   stepPrecision: ts.expression(ts.default(ts.number(), 10)),
   minSteps: ts.expression(ts.default(ts.number(), 10)),
   maxSteps: ts.expression(ts.default(ts.number(), 100)),
 });
 
-export const BaseMouseNaturalScrollSchema = ts.node({
+export const NaturalScrollSchema = ts.node({
   args: ts.args([ts.expression(ts.number()), ts.expression(ts.number())]),
-  options: MouseNaturalScrollOptionsSchema,
+  options: NaturalScrollOptionsSchema,
 });
 
-export type MouseNaturalScrollParams = ts.output<
-  typeof BaseMouseNaturalScrollSchema
->;
+export type NaturalScrollParams = ts.output<typeof NaturalScrollSchema>;
 
-export const MouseNaturalScrollParser = ts.into(
-  BaseMouseNaturalScrollSchema,
-  (v): IAction<SessionContext> => new MouseScroll(v),
+export const NaturalScrollParser = ts.into(
+  NaturalScrollSchema,
+  (v): IAction<Context> => new NaturalScroll(v),
 );
 
-export class MouseNaturalScroll implements IAction<SessionContext> {
-  constructor(private params_: MouseNaturalScrollParams) {}
+export class NaturalScroll implements IAction<Context> {
+  constructor(private params_: NaturalScrollParams) {}
 
-  async execute(ctx: SessionContext) {
+  async execute(ctx: Context) {
     const scrolls = this.generateScrolls(ctx);
     for (const scroll of scrolls) {
       await scroll.execute(ctx);
@@ -192,7 +188,7 @@ export class MouseNaturalScroll implements IAction<SessionContext> {
     }
   }
 
-  generateScrolls(ctx: SessionContext) {
+  generateScrolls(ctx: Context): Scroll[] {
     const endDeltaX = this.params_.args[0].resolve(ctx.$.expressionContext);
     const endDeltaY = this.params_.args[1].resolve(ctx.$.expressionContext);
     const scrolls = [];
@@ -220,7 +216,7 @@ export class MouseNaturalScroll implements IAction<SessionContext> {
       const deltaX = endDeltaX * (ratio - prevRatio);
       const deltaY = endDeltaY * (ratio - prevRatio);
 
-      const scroll = new MouseScroll({
+      const scroll = new Scroll({
         args: [
           new ts.ResolvedExpression(deltaX),
           new ts.ResolvedExpression(deltaY),
@@ -235,7 +231,7 @@ export class MouseNaturalScroll implements IAction<SessionContext> {
   }
 }
 
-export const MouseButtonSchema = ts.enum([
+export const ButtonSchema = ts.enum([
   'none',
   'left',
   'middle',
@@ -244,28 +240,28 @@ export const MouseButtonSchema = ts.enum([
   'forward',
 ]);
 
-export type MouseButton = ts.output<typeof MouseButtonSchema>;
+export type Button = ts.output<typeof ButtonSchema>;
 
-export const MousePressOptionsSchema = ts.properties({
-  button: ts.default(MouseButtonSchema, 'left'),
+export const PressOptionsSchema = ts.properties({
+  button: ts.default(ButtonSchema, 'left'),
   clickCount: ts.expression(ts.default(ts.number(), 1)),
 });
 
-export const BaseMousePressSchema = ts.node({
-  options: MousePressOptionsSchema,
+export const PressSchema = ts.node({
+  options: PressOptionsSchema,
 });
 
-export type MousePressParams = ts.output<typeof BaseMousePressSchema>;
+export type PressParams = ts.output<typeof PressSchema>;
 
-export const MousePressParser = ts.into(
-  BaseMousePressSchema,
-  (v): IAction<SessionContext> => new MousePress(v),
+export const PressParser = ts.into(
+  PressSchema,
+  (v): IAction<Context> => new Press(v),
 );
 
-export class MousePress implements IAction<SessionContext> {
-  constructor(private params_: MousePressParams) {}
+export class Press implements IAction<Context> {
+  constructor(private params_: PressParams) {}
 
-  async execute(ctx: SessionContext) {
+  async execute(ctx: Context) {
     await ctx.session.send('Input.dispatchMouseEvent', {
       type: 'mousePressed',
       ...ctx.session.mousePosition,
@@ -277,26 +273,26 @@ export class MousePress implements IAction<SessionContext> {
   }
 }
 
-export const MouseReleaseSchemaOptions = ts.properties({
-  button: ts.default(MouseButtonSchema, 'left'),
+export const ReleaseSchemaOptions = ts.properties({
+  button: ts.default(ButtonSchema, 'left'),
   clickCount: ts.expression(ts.default(ts.number(), 1)),
 });
 
-export const BaseMouseReleaseSchema = ts.node({
-  options: MouseReleaseSchemaOptions,
+export const ReleaseSchema = ts.node({
+  options: ReleaseSchemaOptions,
 });
 
-export type MouseReleaseParams = ts.output<typeof BaseMouseReleaseSchema>;
+export type ReleaseParams = ts.output<typeof ReleaseSchema>;
 
-export const MouseReleaseParser = ts.into(
-  BaseMouseReleaseSchema,
-  (v): IAction<SessionContext> => new MouseRelease(v),
+export const ReleaseParser = ts.into(
+  ReleaseSchema,
+  (v): IAction<Context> => new Release(v),
 );
 
-export class MouseRelease implements IAction<SessionContext> {
-  constructor(private params_: MouseReleaseParams) {}
+export class Release implements IAction<Context> {
+  constructor(private params_: ReleaseParams) {}
 
-  async execute(ctx: SessionContext) {
+  async execute(ctx: Context) {
     await ctx.session.send('Input.dispatchMouseEvent', {
       type: 'mouseReleased',
       ...ctx.session.mousePosition,
@@ -308,30 +304,30 @@ export class MouseRelease implements IAction<SessionContext> {
   }
 }
 
-export const MouseClickOptionsSchema = ts.properties({
-  button: ts.default(MouseButtonSchema, 'left'),
+export const ClickOptionsSchema = ts.properties({
+  button: ts.default(ButtonSchema, 'left'),
   times: ts.expression(ts.default(ts.number(), 1)),
   delay: ts.expression(ts.default(ts.number(), 0)),
 });
 
-export const BaseMouseClickSchema = ts.node({
-  options: MouseClickOptionsSchema,
+export const ClickSchema = ts.node({
+  options: ClickOptionsSchema,
 });
 
-export type MouseClickParams = ts.output<typeof BaseMouseClickSchema>;
+export type ClickParams = ts.output<typeof ClickSchema>;
 
-export const MouseClickParser = ts.into(
-  BaseMouseClickSchema,
-  (v): IAction<SessionContext> => new MouseClick(v),
+export const ClickParser = ts.into(
+  ClickSchema,
+  (v): IAction<Context> => new Click(v),
 );
 
-export class MouseClick implements IAction<SessionContext> {
-  constructor(private params_: MouseClickParams) {}
+export class Click implements IAction<Context> {
+  constructor(private params_: ClickParams) {}
 
-  async execute(ctx: SessionContext) {
+  async execute(ctx: Context) {
     const times = this.params_.options.times.resolve(ctx.$.expressionContext);
     for (let i = 1; i <= times; i++) {
-      await new MousePress({
+      await new Press({
         options: {
           button: this.params_.options.button,
           clickCount: new ts.ResolvedExpression(i),
@@ -344,7 +340,7 @@ export class MouseClick implements IAction<SessionContext> {
       if (delay) {
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
-      await new MouseRelease({
+      await new Release({
         options: {
           button: this.params_.options.button,
           clickCount: new ts.ResolvedExpression(i),
@@ -354,16 +350,16 @@ export class MouseClick implements IAction<SessionContext> {
   }
 }
 
-export const MouseRegistry: ts.Registry<
+export const Registry: ts.Registry<
   ts.Node,
-  IAction<SessionContext>,
-  ts.Type<ts.Node, IAction<SessionContext>>
+  IAction<Context>,
+  ts.Type<ts.Node, IAction<Context>>
 > = new ts.Registry();
 
-MouseRegistry.register('click', MouseClickParser)
-  .register('natural_move', MouseNaturalMoveParser)
-  .register('natural_scroll', MouseNaturalScrollParser)
-  .register('move', MouseMoveParser)
-  .register('press', MousePressParser)
-  .register('release', MouseReleaseParser)
-  .register('scroll', MouseScrollParser);
+Registry.register('click', ClickParser)
+  .register('natural_move', NaturalMoveParser)
+  .register('natural_scroll', NaturalScrollParser)
+  .register('move', MoveParser)
+  .register('press', PressParser)
+  .register('release', ReleaseParser)
+  .register('scroll', ScrollParser);

@@ -1,30 +1,21 @@
 import * as ts from '@tadpolehq/schema';
 import { v4 as uuidv4 } from 'uuid';
-import {
-  EvaluatorRegistry,
-  SessionActionRegistry,
-  type IAction,
-} from './base.js';
-import type { SessionContext } from '../context.js';
-import { Node } from '../node.js';
-import { reduceEvaluators } from '../utils.js';
+import type { IAction } from '@/actions/base.js';
+import * as cdp from '@/cdp/index.js';
+import * as evaluators from '@/evaluators/index.js';
+import { Registry, type Context } from './base.js';
 
-export const BaseQuerySelectorSchema = ts.node({
+export const SelectSchema = ts.node({
   args: ts.args([ts.expression(ts.string())]),
-  execute: ts.slot(ts.children(ts.anyOf(SessionActionRegistry))),
+  execute: ts.slot(ts.children(ts.anyOf(Registry))),
 });
 
-export type QuerySelectorParams = ts.output<typeof BaseQuerySelectorSchema>;
+export type SelectParams = ts.output<typeof SelectSchema>;
 
-export const QuerySelectorParser = ts.into(
-  BaseQuerySelectorSchema,
-  (v): IAction<SessionContext> => new QuerySelector(v),
-);
+abstract class Select implements IAction<Context> {
+  constructor(private params_: SelectParams) {}
 
-abstract class BaseQuerySelector implements IAction<SessionContext> {
-  constructor(private params_: QuerySelectorParams) {}
-
-  async execute(ctx: SessionContext) {
+  async execute(ctx: Context) {
     const activeNode = await ctx.session.activeNode();
     if (activeNode.isCollection)
       throw new Error('querySelectors cannot be called on a node collection.');
@@ -53,7 +44,7 @@ abstract class BaseQuerySelector implements IAction<SessionContext> {
     }
 
     ctx.session.pushNode(
-      new Node({
+      new cdp.Node({
         remoteObjectId: result.objectId,
         isCollection: this.isCollection,
       }),
@@ -76,7 +67,12 @@ abstract class BaseQuerySelector implements IAction<SessionContext> {
   protected abstract get isCollection(): boolean;
 }
 
-export class QuerySelector extends BaseQuerySelector {
+export const SelectFirstParser = ts.into(
+  SelectSchema,
+  (v): IAction<Context> => new SelectFirst(v),
+);
+
+export class SelectFirst extends Select {
   override get functionExpression() {
     return 'this.querySelector(selector)';
   }
@@ -86,12 +82,12 @@ export class QuerySelector extends BaseQuerySelector {
   }
 }
 
-export const QuerySelectorAllParser = ts.into(
-  BaseQuerySelectorSchema,
-  (v): IAction<SessionContext> => new QuerySelectorAll(v),
+export const SelectAllParser = ts.into(
+  SelectSchema,
+  (v): IAction<Context> => new SelectAll(v),
 );
 
-export class QuerySelectorAll extends BaseQuerySelector {
+export class SelectAll extends Select {
   override get functionExpression() {
     return 'Array.from(this.querySelectorAll(selector))';
   }
@@ -105,27 +101,27 @@ export const WaitForOptions = ts.properties({
   timeout: ts.expression(ts.default(ts.number(), 5000)),
 });
 
-export const BaseWaitForSchema = ts.node({
+export const WaitForSchema = ts.node({
   options: WaitForOptions,
-  predicate: ts.children(ts.anyOf(EvaluatorRegistry)),
+  predicate: ts.children(ts.anyOf(evaluators.Registry)),
 });
 
-export type WaitForParams = ts.output<typeof BaseWaitForSchema>;
+export type WaitForParams = ts.output<typeof WaitForSchema>;
 
 export const WaitForParser = ts.into(
-  BaseWaitForSchema,
-  (v): IAction<SessionContext> => new WaitFor(v),
+  WaitForSchema,
+  (v): IAction<Context> => new WaitFor(v),
 );
 
-export class WaitFor implements IAction<SessionContext> {
+export class WaitFor implements IAction<Context> {
   constructor(private params_: WaitForParams) {}
 
-  async execute(ctx: SessionContext) {
+  async execute(ctx: Context) {
     const activeNode = await ctx.session.activeNode();
     if (activeNode.isCollection)
       throw new Error('waitFor cannot be called on a node collection.');
 
-    const predicate = reduceEvaluators(this.params_.predicate, {
+    const predicate = evaluators.reduce(this.params_.predicate, {
       rootInput: 'e',
       expressionContext: ctx.$.expressionContext,
     });

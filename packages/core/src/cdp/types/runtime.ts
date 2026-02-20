@@ -1,4 +1,4 @@
-import type { Value } from '../values.js';
+import type { Value } from '@/values.js';
 
 export type RemoteObjectId = string;
 

@@ -1,24 +1,24 @@
 import * as ts from '@tadpolehq/schema';
-import { SessionActionRegistry, type IAction } from './base.js';
-import type { BrowserContext } from '../context.js';
-import { Session } from '../session.js';
-import type { Page } from '../types/index.js';
+import type { IAction } from '@/actions/base.js';
+import * as session from '@/actions/cdp/session/index.js';
+import * as cdp from '@/cdp/index.js';
+import type { Context } from './base.js';
 
-export const BaseNewPageSchema = ts.node({
-  execute: ts.slot(ts.children(ts.anyOf(SessionActionRegistry))),
+export const NewSchema = ts.node({
+  execute: ts.slot(ts.children(ts.anyOf(session.Registry))),
 });
 
-export type NewPageParams = ts.output<typeof BaseNewPageSchema>;
+export type NewParams = ts.output<typeof NewSchema>;
 
-export const NewPageParser = ts.into(
-  BaseNewPageSchema,
-  (v): IAction<BrowserContext> => new NewPage(v),
+export const NewParser = ts.into(
+  NewSchema,
+  (v): IAction<Context> => new New(v),
 );
 
-export class NewPage implements IAction<BrowserContext> {
-  constructor(private params_: NewPageParams) {}
+export class New implements IAction<Context> {
+  constructor(protected params_: NewParams) {}
 
-  async execute(ctx: BrowserContext) {
+  async execute(ctx: Context) {
     const { browserContextId } = await ctx.browser.send<{
       browserContextId: string;
     }>({
@@ -37,7 +37,7 @@ export class NewPage implements IAction<BrowserContext> {
       method: 'Target.attachToTarget',
       params: attachToTargetParams,
     });
-    const pageSession = new Session({
+    const pageSession = new cdp.Session({
       id: sessionId,
       browser: ctx.browser,
       logger: ctx.$.log.child({ sessionId }),
@@ -47,15 +47,14 @@ export class NewPage implements IAction<BrowserContext> {
     await pageSession.send('Page.enable');
     await pageSession.send('Page.setLifecycleEventsEnabled', { enabled: true });
 
-    const cleanupFrameListener = pageSession.on<{ frame: Page.Frame }>(
-      'Page.frameNavigated',
-      ({ frame }) => {
-        if (frame.id === pageSession.mainFrameId) {
-          pageSession.currentLoaderId = frame.loaderId;
-          pageSession.clearDocumentNode();
-        }
-      },
-    );
+    const cleanupFrameListener = pageSession.on<{
+      frame: cdp.types.Page.Frame;
+    }>('Page.frameNavigated', ({ frame }) => {
+      if (frame.id === pageSession.mainFrameId) {
+        pageSession.currentLoaderId = frame.loaderId;
+        pageSession.clearDocumentNode();
+      }
+    });
 
     const pageCtx = {
       $: ctx.$,

@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { WebSocket } from 'ws';
-import type { ILogger } from './logger.js';
+import type { ILogger } from '@/logger.js';
 
 type Callback = {
   onsuccess: (res: any) => void;
