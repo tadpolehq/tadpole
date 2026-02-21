@@ -1,6 +1,6 @@
 module airbnb {
   browser_action open {
-    new_page {
+    new {
       goto "https://airbnb.com"
       airbnb.maybe_close_dialog
       wait_for { $ "#bigsearch-query-location-input" }
@@ -53,13 +53,20 @@ module airbnb {
 }
 
 main {
-  airbnb.open {
-    airbnb.search text="Miami, Florida"
-    airbnb.load_each_page {
-      $$ "[itemProp='itemListElement']" {
-        extract "pages[]" {
-          link { $ "a"; attr "href" }
-          price { $ "[data-testid='price-availability-row']"; text }
+  browser {
+    options {
+      common
+    }
+    run {
+      airbnb.open {
+        airbnb.search text="Miami, Florida"
+        airbnb.load_each_page {
+          $$ "[itemProp='itemListElement']" {
+            extract "pages[]" {
+              link { $ "a"; attr "href" }
+              price { $ "[data-testid='price-availability-row']"; text }
+            }
+          }
         }
       }
     }

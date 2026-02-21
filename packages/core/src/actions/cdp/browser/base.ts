@@ -11,4 +11,4 @@ export const Registry: ts.IRegistry<
   ts.Node,
   IAction<Context>,
   ts.Type<ts.Node, IAction<Context>>
-> = new ts.Registry();
+> = new ts.Registry({ parent: root.Registry });

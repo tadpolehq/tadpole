@@ -29,7 +29,6 @@
   "devDependencies": {
     "@tadpolehq/eslint-config": "workspace:*",
     "@tadpolehq/ts-config": "workspace:*",
-    "@tadpolehq/utils": "workspace:*",
     "eslint": "^9.39.1",
     "tsdown": "^0.20.1",
     "typescript": "^5.9.3"

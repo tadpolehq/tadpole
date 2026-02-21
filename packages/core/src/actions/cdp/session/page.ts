@@ -80,15 +80,15 @@ export const GotoOptions = ts.properties({
   timeout: ts.expression(ts.default(ts.number(), 5000)),
 });
 
-export const BaseGotoSchema = ts.node({
+export const GotoSchema = ts.node({
   args: ts.args([ts.expression(ts.string())]),
   options: GotoOptions,
 });
 
-export type GotoParams = ts.output<typeof BaseGotoSchema>;
+export type GotoParams = ts.output<typeof GotoSchema>;
 
 export const GotoParser = ts.into(
-  BaseGotoSchema,
+  GotoSchema,
   (v): IAction<Context> => new Goto(v),
 );
 
@@ -127,15 +127,15 @@ export const WaitUntilOptionsSchema = ts.properties({
   timeout: ts.expression(ts.default(ts.number(), 5000)),
 });
 
-export const BaseWaitUntilSchema = ts.node({
+export const WaitUntilSchema = ts.node({
   args: ts.args([ts.default(WaitUntilEventSchema, 'load')]),
   options: WaitUntilOptionsSchema,
 });
 
-export type WaitUntilParams = ts.output<typeof BaseWaitUntilSchema>;
+export type WaitUntilParams = ts.output<typeof WaitUntilSchema>;
 
 export const WaitUntilParser = ts.into(
-  BaseWaitUntilSchema,
+  WaitUntilSchema,
   (v): IAction<Context> => new WaitUntil(v),
 );
 

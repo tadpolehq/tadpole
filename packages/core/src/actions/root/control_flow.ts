@@ -183,7 +183,7 @@ export abstract class Loop<TCtx extends WithContext> implements IAction<TCtx> {
   protected abstract executePredicate(
     ctx: TCtx,
     predicate: string,
-  ): Promise<Boolean>;
+  ): Promise<boolean>;
 
   protected async executeDoBlock(ctx: TCtx) {
     for (const action of this.params_.body.do) {
@@ -228,7 +228,7 @@ export function MaybeSchema<TCtx>(
 export type MaybeParams = ts.output<ReturnType<typeof MaybeSchema>>;
 
 export class Maybe<TCtx extends WithContext> implements IAction<TCtx> {
-  constructor(private actions_: MaybeParams) {}
+  constructor(protected actions_: MaybeParams) {}
 
   protected async executeChildrenActions(ctx: TCtx) {
     for (const action of this.actions_) {
@@ -245,49 +245,52 @@ export class Maybe<TCtx extends WithContext> implements IAction<TCtx> {
   }
 }
 
-export const BaseOnceSchema = ts.node({
-  options: ts.properties({
-    some: ts.default(ts.boolean(), false),
-  }),
-  body: ts.childrenStruct({
-    if: ts.children(ts.anyOf(EvaluatorRegistry)),
-    do: ts.slot(ts.children(ts.anyOf(SessionActionRegistry))),
-  }),
-});
+export function OnceSchema<TCtx>(
+  registry: ts.IRegistry<
+    ts.Node,
+    IAction<TCtx>,
+    ts.Type<ts.Node, IAction<TCtx>>
+  >,
+) {
+  return ts.node({
+    options: ts.properties({
+      some: ts.default(ts.boolean(), false),
+    }),
+    body: ts.childrenStruct({
+      if: ts.children(ts.anyOf(evaluators.Registry)),
+      do: ts.slot(ts.children(ts.anyOf(registry))),
+    }),
+  });
+}
 
-export type OnceParams = ts.output<typeof BaseOnceSchema>;
+export type OnceParams = ts.output<ReturnType<typeof OnceSchema>>;
 
-export const OnceParser = ts.into(
-  BaseOnceSchema,
-  (v): IAction<SessionContext> => new Once(v),
-);
+export abstract class Once<TCtx extends WithContext> implements IAction<TCtx> {
+  constructor(protected params_: OnceParams) {}
 
-export class Once implements IAction<SessionContext> {
-  constructor(private params_: OnceParams) {}
+  protected abstract executePredicate(
+    ctx: TCtx,
+    predicate: string,
+  ): Promise<boolean>;
 
-  async execute(ctx: SessionContext) {
-    const activeNode = await ctx.session.activeNode();
-    const predicate = reduceEvaluators(this.params_.body.if, {
+  protected createPredicate(ctx: TCtx) {
+    return evaluators.reduce(this.params_.body.if, {
       rootInput: 'e',
       expressionContext: ctx.$.expressionContext,
     });
-    const functionBody = activeNode.isCollection
-      ? `return this.${this.params_.options.some ? 'some' : 'every'}(e => ${predicate});`
-      : `const e = this; return !!(${predicate});`;
-    const functionDeclaration = `function() { ${functionBody} }`;
-    const params = {
-      returnByValue: true,
-    };
-    const result = await ctx.session.callFunctionOn(
-      functionDeclaration,
-      activeNode.remoteObjectId,
-      params,
-    );
-    if (result.value) {
-      for (const action of this.params_.body.do) {
-        await action.execute(ctx);
-      }
+  }
+
+  protected async executeChildrenActions(ctx: TCtx) {
+    for (const action of this.params_.body.do) {
+      await action.execute(ctx);
     }
+  }
+
+  async execute(ctx: TCtx) {
+    const predicate = this.createPredicate(ctx);
+    const result = await this.executePredicate(ctx, predicate);
+    if (!result) return;
+    await this.executeChildrenActions(ctx);
   }
 }
 

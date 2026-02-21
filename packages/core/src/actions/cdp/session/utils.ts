@@ -1,6 +1,5 @@
 import * as ts from '@tadpolehq/schema';
 import { writeFile } from 'node:fs/promises';
-import { Random as _Random } from 'random';
 import type { IAction } from '@/actions/base.js';
 import * as root from '@/actions/root/index.js';
 import * as cdp from '@/cdp/index.js';

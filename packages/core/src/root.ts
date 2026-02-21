@@ -1,7 +1,7 @@
 import * as ts from '@tadpolehq/schema';
 import * as actions from './actions/index.js';
 import * as evaluators from './evaluators/index.js';
-import { DefSchema } from './def.js';
+import { DefParser } from './def.js';
 
 export const ValueTypeSchema = ts.expression(
   ts.union([ts.string(), ts.number()]),
@@ -107,5 +107,5 @@ const layout = new Map<string, ts.IMetaType<ts.Node>>([
 
 export const Root = ts.root({
   meta: ts.meta.layout(layout),
-  main: DefSchema,
+  main: DefParser,
 });

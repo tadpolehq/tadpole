@@ -10,7 +10,7 @@ type Callback = {
 export type JSONRPCParams = {
   method: string;
   params?: Record<string, any>;
-  sessionId?: string | null;
+  sessionId?: string;
 };
 
 export type BrowserParams = {
@@ -66,7 +66,7 @@ export class Browser {
     });
   }
 
-  send<T>({ method, params, sessionId = null }: JSONRPCParams): Promise<T> {
+  send<T>({ method, params, sessionId }: JSONRPCParams): Promise<T> {
     if (this.ws_ === null) throw new Error('Websocket is not open.');
 
     const id = this.methodId_++;
@@ -74,7 +74,7 @@ export class Browser {
       id,
       method,
       params: params ?? {},
-      sessionId: sessionId ?? undefined,
+      sessionId,
     });
     this.log_.debug(`Sending message with data=${data}`);
     return new Promise((fufill, reject) => {

@@ -7,11 +7,12 @@ export interface ProcessOptions {
   pathToExec: string;
   remoteDebuggingPort: number;
   userDataDir: string;
-  extraArgs?: string[];
+  flags?: string[];
+  env?: Record<string, string>;
 }
 
 export interface LaunchOptions {
-  startTimeout: number;
+  startTimeout?: number;
 }
 
 export class Process {
@@ -19,22 +20,25 @@ export class Process {
   private pathToExec_: string;
   private remoteDebuggingPort_: number;
   private userDataDir_: string;
-  private extraArgs_: string[];
+  private flags_: string[];
+  private env_: Record<string, string>;
 
   constructor({
     pathToExec,
-    remoteDebuggingPort = 9222,
-    userDataDir = path.join(process.cwd(), '.tadpole', 'profile'),
-    extraArgs,
+    remoteDebuggingPort,
+    userDataDir,
+    flags,
+    env,
   }: ProcessOptions) {
     this.process_ = null;
     this.pathToExec_ = pathToExec;
     this.remoteDebuggingPort_ = remoteDebuggingPort;
     this.userDataDir_ = userDataDir;
-    this.extraArgs_ = extraArgs ?? [];
+    this.flags_ = flags ?? [];
+    this.env_ = env ?? {};
   }
 
-  static async findPath(): Promise<string | null> {
+  static async findPath(): Promise<string | undefined> {
     let paths: string[] = [];
     switch (os.platform()) {
       case 'win32': {
@@ -76,25 +80,28 @@ export class Process {
       if (await fileExistsAsync(path)) return path;
     }
 
-    return null;
+    return;
   }
 
   get launchArgs(): string[] {
     return [
       `--remote-debugging-port=${this.remoteDebuggingPort_}`,
       `--user-data-dir=${this.userDataDir_}`,
-      ...this.extraArgs_,
+      ...this.flags_,
     ];
   }
 
-  async launch({ startTimeout = 10000 }: LaunchOptions) {
+  async launch({ startTimeout = 10000 }: LaunchOptions = {}) {
     if (this.process_ !== null) throw new Error('Chrome is already running.');
 
     this.process_ = await spawnAsync(
       this.pathToExec_,
       this.launchArgs,
       {
-        detached: true,
+        env: {
+          ...process.env,
+          ...this.env_,
+        },
       },
       (child) => {
         return new Promise((resolve, reject) => {
@@ -112,11 +119,6 @@ export class Process {
         });
       },
     );
-    this.process_.unref();
-
-    process.on('exit', () => {
-      this.process_?.kill();
-    });
   }
 
   async stop() {

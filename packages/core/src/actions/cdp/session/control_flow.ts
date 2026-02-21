@@ -104,7 +104,7 @@ export class Loop extends root.control_flow.Loop<Context> {
       activeNode.remoteObjectId,
       params,
     );
-    return result.value;
+    return !!result.value;
   }
 }
 
@@ -112,5 +112,32 @@ export const MaybeParser = ts.into(
   root.control_flow.MaybeSchema(Registry),
   (v): IAction<Context> => new root.control_flow.Maybe(v),
 );
+
+export const OnceParser = ts.into(
+  root.control_flow.OnceSchema(Registry),
+  (v): IAction<Context> => new Once(v),
+);
+
+export class Once extends root.control_flow.Once<Context> {
+  protected override async executePredicate(
+    ctx: Context,
+    predicate: string,
+  ): Promise<boolean> {
+    const activeNode = await ctx.session.activeNode();
+    const functionBody = activeNode.isCollection
+      ? `return this.${this.params_.options.some ? 'some' : 'every'}(e => ${predicate});`
+      : `const e = this; return !!(${predicate});`;
+    const functionDeclaration = `function() { ${functionBody} }`;
+    const params = {
+      returnByValue: true,
+    };
+    const result = await ctx.session.callFunctionOn(
+      functionDeclaration,
+      activeNode.remoteObjectId,
+      params,
+    );
+    return !!result.value;
+  }
+}
 
 export const ParallelParser = root.control_flow.ParallelParser(Registry);

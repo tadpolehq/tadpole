@@ -38,6 +38,7 @@
   "devDependencies": {
     "@tadpolehq/eslint-config": "workspace:*",
     "@tadpolehq/ts-config": "workspace:*",
+    "@tadpolehq/utils": "workspace:*",
     "@types/bezier-js": "^4.1.3",
     "@types/ws": "^8.18.1",
     "eslint": "^9.39.1",

@@ -79,7 +79,7 @@ export class Random<TCtx extends WithContext> implements IAction<TCtx> {
     return this.params_.options.seed.resolve(ctx.$.expressionContext);
   }
 
-  protected calculateWeights(_ctx: TCtx): number[] | null {
+  protected calculateWeights(): number[] | null {
     if (!this.params_.options.weights) return null;
     const weights = [this.params_.options.weights[0] || 1];
     for (let i = 1; i < this.params_.execute.length; i++) {
@@ -89,16 +89,12 @@ export class Random<TCtx extends WithContext> implements IAction<TCtx> {
     return weights;
   }
 
-  protected getWeightedIndex(
-    _ctx: TCtx,
-    generator: _Random,
-    weights: number[],
-  ): number {
+  protected getWeightedIndex(generator: _Random, weights: number[]): number {
     const random = generator.int(0, weights.at(-1)!);
     return weights.findIndex((w) => w > random);
   }
 
-  protected getIndex(_ctx: TCtx, generator: _Random) {
+  protected getIndex(generator: _Random) {
     return generator.int(0, this.params_.execute.length - 1);
   }
 
@@ -110,12 +106,12 @@ export class Random<TCtx extends WithContext> implements IAction<TCtx> {
     const n = this.resolveN(ctx);
     const seed = this.resolveSeed(ctx);
     const generator = new _Random(seed);
-    const weights = this.calculateWeights(ctx);
+    const weights = this.calculateWeights();
 
     for (let i = 0; i < n; i++) {
       const index = weights
-        ? this.getWeightedIndex(ctx, generator, weights)
-        : this.getIndex(ctx, generator);
+        ? this.getWeightedIndex(generator, weights)
+        : this.getIndex(generator);
 
       await this.executeChildAction(ctx, index);
     }
