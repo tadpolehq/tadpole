@@ -8,8 +8,12 @@ export interface Set {
   session: ((session: cdp.Session) => Promise<void>)[];
 }
 
+export interface Context {
+  expressionContext: ts.ExpressionContext;
+}
+
 export interface IPreset {
-  build(): Partial<Set>;
+  build(ctx: Context): Partial<Set>;
 }
 
 export const Registry: ts.IRegistry<
@@ -18,9 +22,9 @@ export const Registry: ts.IRegistry<
   ts.Type<ts.Node, IPreset>
 > = new ts.Registry();
 
-export function concat(presets: IPreset[]): Set {
+export function concat(presets: IPreset[], ctx: Context): Set {
   return presets
-    .map((p) => p.build())
+    .map((p) => p.build(ctx))
     .reduce<Set>(
       (c, s) => {
         return {

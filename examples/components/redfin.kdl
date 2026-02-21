@@ -1,9 +1,6 @@
-import "stealth.kdl"
-
 module redfin {
   browser_action open {
-    new_page {
-      stealth.apply
+    new {
       goto "https://redfin.com"
       slot
     }

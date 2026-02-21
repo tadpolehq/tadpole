@@ -11,7 +11,7 @@ export const BrowserOptionsSchema = ts.properties({
   launch: ts.default(ts.boolean(), true),
   remoteDebuggingPort: ts.expression(ts.default(ts.number(), 9222)),
   remoteDebuggingHost: ts.expression(ts.default(ts.string(), 'localhost')),
-  pathToExec: ts.optional(ts.string()),
+  pathToExec: ts.expression(ts.optional(ts.string())),
   userDataDir: ts.default(
     ts.string(),
     path.join(process.cwd(), '.tadpole', 'profile'),
@@ -38,13 +38,16 @@ export class Browser implements IAction<root.WithContext> {
 
   async execute(ctx: root.WithContext) {
     let process = null;
-    const set = chrome.presets.concat(this.params_.body.options);
+    const set = chrome.presets.concat(this.params_.body.options, {
+      expressionContext: ctx.$.expressionContext,
+    });
     const remoteDebuggingPort =
       this.params_.options.remoteDebuggingPort.resolve(ctx.$.expressionContext);
     const remoteDebuggingHost =
       this.params_.options.remoteDebuggingHost.resolve(ctx.$.expressionContext);
     if (this.params_.options.launch) {
-      let pathToExec: string | undefined = this.params_.options.pathToExec;
+      let pathToExec: string | undefined =
+        this.params_.options.pathToExec.resolve(ctx.$.expressionContext);
       if (!pathToExec) pathToExec = await chrome.Process.findPath();
 
       if (!pathToExec) throw new Error(`Could not find chrome executable`);
@@ -75,6 +78,7 @@ export class Browser implements IAction<root.WithContext> {
       const browserContext: cdp_actions.browser.Context = {
         $: ctx.$,
         browser,
+        set,
       };
       for (const action of this.params_.body.run) {
         await action.execute(browserContext);

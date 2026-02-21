@@ -10,6 +10,14 @@ export class LayoutMetaType implements IMetaType<Document> {
     return this.layout_;
   }
 
+  extend(name: string, type: IMetaType<Node>): this {
+    if (this.layout_.has(name))
+      throw new Error(`${name} is already defined in the layout`);
+
+    this.layout_.set(name, type);
+    return this;
+  }
+
   async parse(
     input: Document,
     ctx: TypeParseContext,

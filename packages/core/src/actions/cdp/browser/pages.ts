@@ -56,15 +56,20 @@ export class New implements IAction<Context> {
       }
     });
 
-    const pageCtx = {
-      $: ctx.$,
-      session: pageSession,
-      get browser() {
-        return this.session.browser;
-      },
-    };
-
     try {
+      for (const setup of ctx.set.session) {
+        await setup(pageSession);
+      }
+
+      const pageCtx = {
+        $: ctx.$,
+        session: pageSession,
+        get browser() {
+          return this.session.browser;
+        },
+        set: ctx.set,
+      };
+
       for (const action of this.params_.execute) {
         await action.execute(pageCtx);
       }

@@ -1,11 +1,13 @@
 import * as ts from '@tadpolehq/schema';
 import * as actions from './actions/index.js';
+import * as chrome from './chrome/index.js';
 import * as evaluators from './evaluators/index.js';
 import { DefParser } from './def.js';
 
 export const ValueTypeSchema = ts.expression(
   ts.union([ts.string(), ts.number()]),
 );
+
 export const createActionSchema = <TOut>(
   registry: ts.IRegistry<ts.Node, TOut, ts.Type<ts.Node, TOut>>,
 ) =>
@@ -13,6 +15,7 @@ export const createActionSchema = <TOut>(
     kwargs: ts.propertiesRecord(ValueTypeSchema),
     actions: ts.children(ts.anyOf(registry)),
   });
+
 export type ActionParams<TOut> = ts.output<
   ReturnType<typeof createActionSchema<TOut>>
 >;
@@ -41,8 +44,6 @@ export class ActionWrapper<
   }
 }
 
-export const BaseEvaluatorSchema = ts.node({});
-
 export class EvaluatorWrapper implements evaluators.IEvaluator {
   constructor(private evaluators_: evaluators.IEvaluator[]) {}
 
@@ -52,6 +53,14 @@ export class EvaluatorWrapper implements evaluators.IEvaluator {
       result = evaluator.toJS(result, ctx);
     }
     return result;
+  }
+}
+
+export class PresetWrapper implements chrome.presets.IPreset {
+  constructor(private presets_: chrome.presets.IPreset[]) {}
+
+  build(ctx: chrome.presets.Context) {
+    return chrome.presets.concat(this.presets_, ctx);
   }
 }
 
@@ -97,6 +106,16 @@ const layout = new Map<string, ts.IMetaType<ts.Node>>([
                   new ActionWrapper(v),
               ),
               actions.cdp.browser.Registry,
+            ),
+          ],
+          [
+            'preset',
+            ts.meta.register(
+              ts.into(
+                ts.children(ts.anyOf(chrome.presets.Registry)),
+                (v): chrome.presets.IPreset => new PresetWrapper(v),
+              ),
+              chrome.presets.Registry,
             ),
           ],
         ]),

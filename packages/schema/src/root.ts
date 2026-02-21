@@ -32,6 +32,14 @@ export class Root<TOut> {
     this.mainNodeName_ = mainNodeName ?? 'main';
   }
 
+  get meta(): LayoutMetaType {
+    return this.meta_;
+  }
+
+  get main(): Type<Node, TOut> {
+    return this.main_;
+  }
+
   async process(
     document: Document,
     ctx: TypeParseContext,

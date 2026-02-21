@@ -1,12 +1,18 @@
 import "components/redfin.kdl"
+import "components/stealth.kdl"
 
 main {
-  redfin.open {
-    redfin.search text="=text"
-    wait_until
-    redfin.extract_from_card extract_to="addresses" {
-      address {
-        redfin.extract_address_from_card
+  browser {
+    options { common; headless; stealth.windows }
+    run {
+      redfin.open {
+        redfin.search text="=text"
+        wait_until
+        redfin.extract_from_card extract_to="addresses" {
+          address {
+            redfin.extract_address_from_card
+          }
+        }
       }
     }
   }
